@@ -1,0 +1,35 @@
+{
+  "name": "aracoool/whatsapi",
+  "description": "The php WhatsApp library ",
+  "license": "MIT",
+  "keywords": [
+    "WhatsApp",
+    "WhatsApp API"
+  ],
+  "authors": [
+    {
+      "role": "Contributors",
+      "name": "WhatsApi Contributing Team",
+      "homepage": "https://github.com/aracoool/whatsapi/graphs/contributors"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/aracoool/whatsapi/issues",
+    "wiki": "https://github.com/aracoool/whatsapi/wiki",
+    "source": "https://github.com/aracoool/whatsapi"
+  },
+  "autoload": {
+    "psr-4": {
+      "WhatsApi\\": "src/"
+    }
+  },
+  "require": {
+    "php": ">=5.3",
+    "ext-curl": "*",
+    "ext-gd": "*",
+    "ext-sockets": "*",
+    "ext-openssl": "*",
+    "ext-pdo": "*",
+    "ext-sqlite3": "*"
+  }
+}
