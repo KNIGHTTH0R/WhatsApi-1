@@ -1303,21 +1303,19 @@ class Client
 
 		$participantNode = [];
 		foreach ($participants as $participant) {
-			$participantNode[] = new ProtocolNode("participant", [
-				"jid" => $this->getJID($participant)
-			], null, null);
+			$participantNode[] = new ProtocolNode('participant', [
+				'jid' => $this->getJID($participant)
+			]);
 		}
 
 		$id = $this->nodeId['groupcreate'] = $this->createIqId();
 
-		$createNode = new ProtocolNode("create",
-			[
-				"subject" => $subject
-			], $participantNode, null);
+		$createNode = new ProtocolNode('create', [
+				'subject' => $subject
+			], $participantNode);
 
-		$iqNode = new ProtocolNode('iq',
-			[
-				'xmlns' => "w:g2",
+		$iqNode = new ProtocolNode('iq', [
+				'xmlns' => 'w:g2',
 				'id' => $id,
 				'type' => 'set',
 				'to' => Constants::WHATSAPP_GROUP_SERVER
@@ -1327,8 +1325,7 @@ class Client
 		$this->waitForServer($id);
 		$groupId = $this->groupId;
 
-		$this->eventManager()->fire("onGroupCreate",
-			[
+		$this->eventManager()->fire('onGroupCreate', [
 				$this->phoneNumber,
 				$groupId
 			]);
@@ -1344,14 +1341,13 @@ class Client
 	 */
 	public function sendSetGroupSubject($gjid, $subject)
 	{
-		$child = new ProtocolNode("subject", null, null, $subject);
-		$node = new ProtocolNode('iq',
-			[
+		$child = new ProtocolNode('subject', null, null, $subject);
+		$node = new ProtocolNode('iq', [
 				'id' => $this->createIqId(),
 				'type' => 'set',
 				'to' => $this->getJID($gjid),
-				'xmlns' => "w:g2"
-			], [$child], null);
+				'xmlns' => 'w:g2'
+			], [$child]);
 
 		$this->sendNode($node);
 	}
@@ -1371,24 +1367,21 @@ class Client
 
 		$nodes = [];
 		foreach ($gjids as $gjid) {
-			$nodes[] = new ProtocolNode("group",
-				[
+			$nodes[] = new ProtocolNode('group', [
 					'id' => $this->getJID($gjid)
-				], null, null);
+				]);
 		}
 
-		$leave = new ProtocolNode("leave",
-			[
+		$leave = new ProtocolNode('leave', [
 				'action' => 'delete'
-			], $nodes, null);
+			], $nodes);
 
-		$node = new ProtocolNode('iq',
-			[
+		$node = new ProtocolNode('iq', [
 				'id' => $msgId,
 				'to' => Constants::WHATSAPP_GROUP_SERVER,
 				'type' => 'set',
-				'xmlns' => "w:g2"
-			], [$leave], null);
+				'xmlns' => 'w:g2'
+			], [$leave]);
 
 		$this->sendNode($node);
 		$this->waitForServer($msgId);
@@ -1436,7 +1429,7 @@ class Client
 		if (!is_array($participants)) {
 			$participants = [$participants];
 		}
-		$this->sendGroupsChangeParticipants($gId, $participants, "promote", $msgId);
+		$this->sendGroupsChangeParticipants($gId, $participants, 'promote', $msgId);
 	}
 
 	/**
@@ -1451,7 +1444,7 @@ class Client
 		if (!is_array($participants)) {
 			$participants = [$participants];
 		}
-		$this->sendGroupsChangeParticipants($gId, $participants, "demote", $msgId);
+		$this->sendGroupsChangeParticipants($gId, $participants, 'demote', $msgId);
 	}
 
 	/**
@@ -1525,12 +1518,11 @@ class Client
 	 */
 	public function sendMessageRead($to, $id)
 	{
-		$messageNode = new ProtocolNode("receipt",
-			[
+		$messageNode = new ProtocolNode('receipt', [
 				'type' => "read",
 				'to' => $to,
 				'id' => $id
-			], null, null);
+			]);
 
 		$this->sendNode($messageNode);
 	}
@@ -1565,7 +1557,7 @@ class Client
 	 */
 	public function sendMessageComposing($to)
 	{
-		$this->sendChatState($to, "composing");
+		$this->sendChatState($to, 'composing');
 	}
 
 	/**
@@ -1610,17 +1602,16 @@ class Client
 	 */
 	public function sendMessageLocation($to, $long, $lat, $name = null, $url = null)
 	{
-		$mediaNode = new ProtocolNode("media",
-			[
-				'type' => "location",
-				"encoding" => "raw",
-				"latitude" => $lat,
-				"longitude" => $long,
-				"name" => $name,
-				"url" => $url
-			], null, null);
+		$mediaNode = new ProtocolNode('media', [
+				'type' => 'location',
+				'encoding' => 'raw',
+				'latitude' => $lat,
+				'longitude' => $long,
+				'name' => $name,
+				'url' => $url
+			]);
 
-		$id = (is_array($to)) ? $this->sendBroadcast($to, $mediaNode, "media") : $this->sendMessageNode($to,
+		$id = (is_array($to)) ? $this->sendBroadcast($to, $mediaNode, 'media') : $this->sendMessageNode($to,
 			$mediaNode);
 
 		$this->waitForServer($id);
@@ -1636,7 +1627,7 @@ class Client
 	 */
 	public function sendMessagePaused($to)
 	{
-		$this->sendChatState($to, "paused");
+		$this->sendChatState($to, 'paused');
 	}
 
 	/**
@@ -1645,10 +1636,9 @@ class Client
 	 */
 	protected function sendChatState($to, $state)
 	{
-		$node = new ProtocolNode("chatstate",
-			[
+		$node = new ProtocolNode('chatstate', [
 				'to' => $this->getJID($to)
-			], [new ProtocolNode($state, null, null, null)], null);
+			], [new ProtocolNode($state)]);
 
 		$this->sendNode($node);
 	}
@@ -1698,7 +1688,7 @@ class Client
 	 */
 	public function sendOfflineStatus()
 	{
-		$messageNode = new ProtocolNode("presence", ['type' => "inactive"], null, '');
+		$messageNode = new ProtocolNode('presence', ['type' => 'inactive']);
 		$this->sendNode($messageNode);
 	}
 
@@ -1709,16 +1699,14 @@ class Client
 	 */
 	public function sendPong($msgid)
 	{
-		$messageNode = new ProtocolNode('iq',
-			[
+		$messageNode = new ProtocolNode('iq', [
 				'to' => Constants::WHATSAPP_SERVER,
 				'id' => $msgid,
-				'type' => "result"
-			], null, '');
+				'type' => 'result'
+			]);
 
 		$this->sendNode($messageNode);
-		$this->eventManager()->fire("onSendPong",
-			[
+		$this->eventManager()->fire('onSendPong', [
 				$this->phoneNumber,
 				$msgid
 			]);
@@ -1736,7 +1724,7 @@ class Client
 		}
 
 		$presence['name'] = $this->name;
-		$node = new ProtocolNode("presence", $presence, null, '');
+		$node = new ProtocolNode('presence', $presence);
 		$this->sendNode($node);
 	}
 
@@ -1745,15 +1733,14 @@ class Client
 	 *
 	 * @param string $type The presence status.
 	 */
-	public function sendPresence($type = "active")
+	public function sendPresence($type = 'active')
 	{
-		$node = new ProtocolNode("presence",
-			[
+		$node = new ProtocolNode('presence', [
 				'type' => $type
-			], null, '');
+			]);
 
 		$this->sendNode($node);
-		$this->eventManager()->fire("onSendPresence",
+		$this->eventManager()->fire('onSendPresence',
 			[
 				$this->phoneNumber,
 				$type,
@@ -1768,7 +1755,7 @@ class Client
 	 */
 	public function sendPresenceSubscription($to)
 	{
-		$node = new ProtocolNode("presence", ['type' => "subscribe", 'to' => $this->getJID($to)], null, '');
+		$node = new ProtocolNode('presence', ['type' => 'subscribe', 'to' => $this->getJID($to)]);
 		$this->sendNode($node);
 	}
 
@@ -1779,7 +1766,7 @@ class Client
 	 */
 	public function sendPresenceUnsubscription($to)
 	{
-		$node = new ProtocolNode("presence", ['type' => "unsubscribe", 'to' => $this->getJID($to)], null, '');
+		$node = new ProtocolNode('presence', ['type' => 'unsubscribe', 'to' => $this->getJID($to)]);
 		$this->sendNode($node);
 	}
 
@@ -1807,28 +1794,25 @@ class Client
 
 		$items = [];
 		foreach ($blockedJids as $index => $jid) {
-			$item = new ProtocolNode("item",
-				[
-					'type' => "jid",
-					"value" => $this->getJID($jid),
-					"action" => "deny",
-					"order" => $index + 1//WhatsApp stream crashes on zero index
-				], null, null);
+			$item = new ProtocolNode('item', [
+					'type' => 'jid',
+					'value' => $this->getJID($jid),
+					'action' => 'deny',
+					'order' => $index + 1//WhatsApp stream crashes on zero index
+				]);
 			$items[] = $item;
 		}
 
-		$child = new ProtocolNode("list",
-			[
-				"name" => "default"
-			], $items, null);
+		$child = new ProtocolNode('list', [
+				'name' => 'default'
+			], $items);
 
-		$child2 = new ProtocolNode("query", null, [$child], null);
-		$node = new ProtocolNode('iq',
-			[
+		$child2 = new ProtocolNode('query', null, [$child]);
+		$node = new ProtocolNode('iq', [
 				'id' => $this->createIqId(),
-				'xmlns' => "jabber:iq:privacy",
+				'xmlns' => 'jabber:iq:privacy',
 				'type' => 'set'
-			], [$child2], null);
+			], [$child2]);
 
 		$this->sendNode($node);
 	}
@@ -1843,30 +1827,21 @@ class Client
 		$this->sendSetPicture($this->phoneNumber, $path);
 	}
 
-	/*
-     *	Removes the profile photo.
-     */
 	/**
-	 *
+	 * Removes the profile photo.
 	 */
 	public function sendRemoveProfilePicture()
 	{
-		$msgId = $this->createIqId();
-
-		$picture = new ProtocolNode("picture", null, null, null);
-
-		$thumb = new ProtocolNode("picture",
-			[
-				'type' => "preview"
-			], null, null);
+		$picture = new ProtocolNode('picture');
+		$thumb = new ProtocolNode('picture', ['type' => 'preview']);
 
 		$node = new ProtocolNode('iq',
 			[
-				'id' => $msgId,
+				'id' => $this->createIqId(),
 				'to' => $this->getJID($this->phoneNumber),
 				'type' => 'set',
-				'xmlns' => "w:profile:picture"
-			], [$picture, $thumb], null);
+				'xmlns' => 'w:profile:picture'
+			], [$picture, $thumb]);
 
 		$this->sendNode($node);
 	}
@@ -1878,17 +1853,15 @@ class Client
 	 */
 	public function sendSetRecoveryToken($token)
 	{
-		$child = new ProtocolNode("pin",
-			[
-				'xmlns' => "w:ch:p"
+		$child = new ProtocolNode('pin', [
+				'xmlns' => 'w:ch:p'
 			], null, $token);
 
-		$node = new ProtocolNode('iq',
-			[
+		$node = new ProtocolNode('iq', [
 				'id' => $this->createIqId(),
 				'type' => 'set',
 				'to' => Constants::WHATSAPP_SERVER
-			], [$child], null);
+			], [$child]);
 
 		$this->sendNode($node);
 	}
@@ -1900,18 +1873,16 @@ class Client
 	 */
 	public function sendStatusUpdate($txt)
 	{
-		$child = new ProtocolNode("status", null, null, $txt);
-		$node = new ProtocolNode('iq',
-			[
+		$child = new ProtocolNode('status', null, null, $txt);
+		$node = new ProtocolNode('iq', [
 				'to' => Constants::WHATSAPP_SERVER,
 				'type' => 'set',
 				'id' => $this->createIqId(),
-				'xmlns' => "status"
-			], [$child], null);
+				'xmlns' => 'status'
+			], [$child]);
 
 		$this->sendNode($node);
-		$this->eventManager()->fire("onSendStatusUpdate",
-			[
+		$this->eventManager()->fire('onSendStatusUpdate', [
 				$this->phoneNumber,
 				$txt
 			]);
@@ -1927,15 +1898,13 @@ class Client
 	 */
 	public function sendVcard($to, $name, $vCard)
 	{
-		$vCardNode = new ProtocolNode("vcard",
-			[
-				"name" => $name
+		$vCardNode = new ProtocolNode('vcard', [
+				'name' => $name
 			], null, $vCard);
 
-		$mediaNode = new ProtocolNode("media",
-			[
-				'type' => "vcard"
-			], [$vCardNode], '');
+		$mediaNode = new ProtocolNode('media', [
+				'type' => 'vcard'
+			], [$vCardNode]);
 
 		// Return message ID. Make pull request for this.
 		return $this->sendMessageNode($to, $mediaNode);
@@ -1951,18 +1920,16 @@ class Client
 	 */
 	public function sendBroadcastVcard($targets, $name, $vCard)
 	{
-		$vCardNode = new ProtocolNode("vcard",
-			[
-				"name" => $name
+		$vCardNode = new ProtocolNode('vcard', [
+				'name' => $name
 			], null, $vCard);
 
-		$mediaNode = new ProtocolNode("media",
-			[
-				'type' => "vcard"
-			], [$vCardNode], '');
+		$mediaNode = new ProtocolNode('media', [
+				'type' => 'vcard'
+			], [$vCardNode]);
 
 		// Return message ID. Make pull request for this.
-		return $this->sendBroadcast($targets, $mediaNode, "media");
+		return $this->sendBroadcast($targets, $mediaNode, 'media');
 	}
 
 
@@ -1975,16 +1942,14 @@ class Client
 	 */
 	public function rejectCall($to, $id, $callId)
 	{
-		$rejectNode = new ProtocolNode("reject",
-			[
-				"call-id" => $callId
-			], null, null);
+		$rejectNode = new ProtocolNode('reject', [
+				'call-id' => $callId
+			]);
 
-		$callNode = new ProtocolNode("call",
-			[
+		$callNode = new ProtocolNode('call', [
 				'id' => $id,
 				'to' => $this->getJID($to)
-			], [$rejectNode], null);
+			], [$rejectNode]);
 
 		$this->sendNode($callNode);
 	}
@@ -2023,7 +1988,7 @@ class Client
 		$keys = KeyStream::GenerateKeys(base64_decode($this->password), $this->challengeData);
 		$this->inputKey = new KeyStream($keys[2], $keys[3]);
 		$this->outputKey = new KeyStream($keys[0], $keys[1]);
-		$array = "\0\0\0\0" . $this->phoneNumber . $this->challengeData;// . time() . Constants::WHATSAPP_USER_AGENT . " MccMnc/" . str_pad($phone["mcc"], 3, "0", STR_PAD_LEFT) . "001";
+		$array = "\0\0\0\0" . $this->phoneNumber . $this->challengeData; // . time() . Constants::WHATSAPP_USER_AGENT . " MccMnc/" . str_pad($phone["mcc"], 3, "0", STR_PAD_LEFT) . "001";
 		$response = $this->outputKey->EncodeMessage($array, 0, 4, strlen($array) - 4);
 
 		return $response;
@@ -2037,7 +2002,7 @@ class Client
 	protected function createAuthNode()
 	{
 		$data = $this->createAuthBlob();
-		$node = new ProtocolNode("auth", [
+		$node = new ProtocolNode('auth', [
 			'mechanism' => 'WAUTH-2',
 			'user' => $this->phoneNumber
 		], null, $data);
@@ -2072,7 +2037,7 @@ class Client
 	 */
 	protected function createAuthResponseNode()
 	{
-		return new ProtocolNode("response", null, null, $this->authenticate());
+		return new ProtocolNode('response', null, null, $this->authenticate());
 	}
 
 	/**
@@ -2082,11 +2047,11 @@ class Client
 	 */
 	protected function createFeaturesNode()
 	{
-		$readreceipts = new ProtocolNode("readreceipts", null, null, null);
-		$groupsv2 = new ProtocolNode("groups_v2", null, null, null);
-		$privacy = new ProtocolNode("privacy", null, null, null);
-		$presencev2 = new ProtocolNode("presence", null, null, null);
-		$parent = new ProtocolNode("stream:features", null, [$readreceipts, $groupsv2, $privacy, $presencev2], null);
+		$readreceipts = new ProtocolNode('readreceipts');
+		$groupsv2 = new ProtocolNode('groups_v2');
+		$privacy = new ProtocolNode('privacy');
+		$presencev2 = new ProtocolNode('presence');
+		$parent = new ProtocolNode('stream:features', null, [$readreceipts, $groupsv2, $privacy, $presencev2]);
 
 		return $parent;
 	}
@@ -2102,7 +2067,7 @@ class Client
 		$msgid = $this->messageCounter;
 		$this->messageCounter++;
 
-		return $this->loginTime . "-" . $msgid;
+		return $this->loginTime . '-' . $msgid;
 	}
 
 	/**
@@ -2154,19 +2119,19 @@ class Client
 	 */
 	protected function dissectPhone()
 	{
-		if (($handle = fopen(dirname(__FILE__) . '/countries.csv', 'rb')) !== false) {
+		if (($handle = fopen(__DIR__ . '/countries.csv', 'rb')) !== false) {
 			while (($data = fgetcsv($handle, 1000)) !== false) {
 				if (strpos($this->phoneNumber, $data[1]) === 0) {
 					// Return the first appearance.
 					fclose($handle);
 
-					$mcc = explode("|", $data[2]);
+					$mcc = explode('|', $data[2]);
 					$mcc = $mcc[0];
 
 					//hook:
 					//fix country code for North America
-					if ($data[1][0] == "1") {
-						$data[1] = "1";
+					if ($data[1][0] == 1) {
+						$data[1] = 1;
 					}
 
 					$phone = [
@@ -2179,8 +2144,7 @@ class Client
 						'mnc' => $data[5]
 					];
 
-					$this->eventManager()->fire("onDissectPhone",
-						[
+					$this->eventManager()->fire('onDissectPhone', [
 							$this->phoneNumber,
 							$phone['country'],
 							$phone['cc'],
@@ -2198,8 +2162,7 @@ class Client
 			fclose($handle);
 		}
 
-		$this->eventManager()->fire("onDissectPhoneFailed",
-			[
+		$this->eventManager()->fire('onDissectPhoneFailed', [
 				$this->phoneNumber
 			]);
 
@@ -2238,8 +2201,9 @@ class Client
 
 	/**
 	 * Send the nodes to the WhatsApp server to log in.
-	 *
-	 * @throws Exception
+	 * @return bool
+	 * @throws ConnectionException
+	 * @throws LoginFailureException
 	 */
 	protected function doLogin()
 	{
@@ -2274,8 +2238,7 @@ class Client
 			throw new LoginFailureException();
 		}
 
-		$this->eventManager()->fire("onLogin",
-			[
+		$this->eventManager()->fire('onLogin', [
 				$this->phoneNumber
 			]);
 		$this->sendAvailableForChat();
@@ -2302,7 +2265,7 @@ class Client
 	 * @param  mixed $identity_file IdentityFile (optional).
 	 * @return string           Correctly formatted identity
 	 *
-	 * @throws Exception        Error when cannot write identity data to file.
+	 * @throws \RuntimeException Error when cannot write identity data to file.
 	 */
 	protected function buildIdentity($identity_file = false)
 	{
@@ -2323,7 +2286,7 @@ class Client
 		$bytes = strtolower(openssl_random_pseudo_bytes(20));
 
 		if (file_put_contents($identity_file, urlencode($bytes)) === false) {
-			throw new Exception('Unable to write identity file to ' . $identity_file);
+			throw new \RuntimeException('Unable to write identity file to ' . $identity_file);
 		}
 
 		return $bytes;
@@ -2342,76 +2305,74 @@ class Client
 		$users = [];
 
 		for ($i = 0; $i < count($numbers); $i++) { // number must start with '+' if international contact
-			$users[$i] = new ProtocolNode("user", null, null,
+			$users[$i] = new ProtocolNode('user', null, null,
 				(substr($numbers[$i], 0, 1) != '+') ? ('+' . $numbers[$i]) : ($numbers[$i]));
 		}
 
 		if ($deletedNumbers != null || count($deletedNumbers)) {
 			for ($j = 0; $j < count($deletedNumbers); $j++, $i++) {
-				$users[$i] = new ProtocolNode("user", ["jid" => $this->getJID($deletedNumbers[$j]), 'type' => "delete"],
+				$users[$i] = new ProtocolNode('user', ['jid' => $this->getJID($deletedNumbers[$j]), 'type' => 'delete'],
 					null, null);
 			}
 		}
 
 		switch ($syncType) {
 			case 0:
-				$mode = "full";
-				$context = "registration";
+				$mode = 'full';
+				$context = 'registration';
 				break;
 			case 1:
-				$mode = "full";
-				$context = "interactive";
+				$mode = 'full';
+				$context = 'interactive';
 				break;
 			case 2:
-				$mode = "full";
-				$context = "background";
+				$mode = 'full';
+				$context = 'background';
 				break;
 			case 3:
-				$mode = "delta";
-				$context = "interactive";
+				$mode = 'delta';
+				$context = 'interactive';
 				break;
 			case 4:
-				$mode = "delta";
-				$context = "background";
+				$mode = 'delta';
+				$context = 'background';
 				break;
 			case 5:
-				$mode = "query";
-				$context = "interactive";
+				$mode = 'query';
+				$context = 'interactive';
 				break;
 			case 6:
-				$mode = "chunked";
-				$context = "registration";
+				$mode = 'chunked';
+				$context = 'registration';
 				break;
 			case 7:
-				$mode = "chunked";
-				$context = "interactive";
+				$mode = 'chunked';
+				$context = 'interactive';
 				break;
 			case 8:
-				$mode = "chunked";
-				$context = "background";
+				$mode = 'chunked';
+				$context = 'background';
 				break;
 			default:
-				$mode = "delta";
-				$context = "background";
+				$mode = 'delta';
+				$context = 'background';
 		}
 
 		$id = $this->createIqId();
 
-		$node = new ProtocolNode('iq',
-			[
+		$node = new ProtocolNode('iq', [
 				'id' => $id,
-				'xmlns' => "urn:xmpp:whatsapp:sync",
+				'xmlns' => 'urn:xmpp:whatsapp:sync',
 				'type' => 'get'
 			], [
-				new ProtocolNode("sync",
-					[
-						"mode" => $mode,
-						"context" => $context,
-						"sid" => '' . ((time() + 11644477200) * 10000000),
-						"index" => '' . $index,
-						"last" => $last ? "true" : "false"
-					], $users, null)
-			], null);
+				new ProtocolNode('sync', [
+						'mode' => $mode,
+						'context' => $context,
+						'sid' => '' . ((time() + 11644477200) * 10000000),
+						'index' => '' . $index,
+						'last' => $last ? 'true' : 'false'
+					], $users)
+			]);
 
 		$this->sendNode($node);
 		$this->waitForServer($id);
@@ -2440,10 +2401,10 @@ class Client
 			//check if group message
 			if (stristr($number, '-')) {
 				//to group
-				$number .= "@" . Constants::WHATSAPP_GROUP_SERVER;
+				$number .= '@' . Constants::WHATSAPP_GROUP_SERVER;
 			} else {
 				//to normal user
-				$number .= "@" . Constants::WHATSAPP_SERVER;
+				$number .= '@' . Constants::WHATSAPP_SERVER;
 			}
 		}
 
@@ -2475,8 +2436,6 @@ class Client
 				$this->mediaFileInfo['fileextension'] = getExtensionFromMime($this->mediaFileInfo['filemimetype']);
 
 				return true;
-			} else {
-				return false;
 			}
 		} else {
 			if (file_exists($filepath)) {
@@ -2488,8 +2447,6 @@ class Client
 					$this->mediaFileInfo['filemimetype'] = get_mime($filepath);
 
 					return true;
-				} else {
-					return false;
 				}
 			}
 		}
@@ -2543,12 +2500,11 @@ class Client
 
 	/**
 	 * Process inbound data.
-	 *
-	 * @param      $data
+	 * 
+	 * @param $data
 	 * @param bool $autoReceipt
-	 * @param      $type
-	 *
-	 * @throws Exception
+	 * @param string $type
+	 * @throws \Exception
 	 */
 	protected function processInboundData($data, $autoReceipt = true, $type = "read")
 	{
@@ -2566,50 +2522,48 @@ class Client
 	 * @param bool $autoReceipt
 	 * @param              $type
 	 *
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	protected function processInboundDataNode(ProtocolNode $node, $autoReceipt = true, $type = "read")
 	{
-		$this->debugPrint($node->nodeString("rx  ") . "\n");
+		$this->debugPrint($node->nodeString('rx  ') . "\n");
 		$this->serverReceivedId = $node->getAttribute('id');
 
-		if ($node->getTag() == "challenge") {
+		if ($node->getTag() == 'challenge') {
 			$this->processChallenge($node);
-		} elseif ($node->getTag() == "failure") {
+		} elseif ($node->getTag() == 'failure') {
 			$this->loginStatus = Constants::DISCONNECTED_STATUS;
-			$this->eventManager()->fire("onLoginFailed",
+			$this->eventManager()->fire('onLoginFailed',
 				[
 					$this->phoneNumber,
 					$node->getChild(0)->getTag()
 				]);
-		} elseif ($node->getTag() == "success") {
-			if ($node->getAttribute("status") == "active") {
+		} elseif ($node->getTag() == 'success') {
+			if ($node->getAttribute('status') == 'active') {
 				$this->loginStatus = Constants::CONNECTED_STATUS;
 				$challengeData = $node->getData();
 				file_put_contents($this->challengeFilename, $challengeData);
 				$this->writer->setKey($this->outputKey);
 
-				$this->eventManager()->fire("onLoginSuccess",
+				$this->eventManager()->fire('onLoginSuccess',
 					[
 						$this->phoneNumber,
-						$node->getAttribute("kind"),
-						$node->getAttribute("status"),
-						$node->getAttribute("creation"),
-						$node->getAttribute("expiration")
+						$node->getAttribute('kind'),
+						$node->getAttribute('status'),
+						$node->getAttribute('creation'),
+						$node->getAttribute('expiration')
 					]);
-			} elseif ($node->getAttribute("status") == "expired") {
-				$this->eventManager()->fire("onAccountExpired",
-					[
+			} elseif ($node->getAttribute('status') == 'expired') {
+				$this->eventManager()->fire('onAccountExpired', [
 						$this->phoneNumber,
-						$node->getAttribute("kind"),
-						$node->getAttribute("status"),
-						$node->getAttribute("creation"),
-						$node->getAttribute("expiration")
+						$node->getAttribute('kind'),
+						$node->getAttribute('status'),
+						$node->getAttribute('creation'),
+						$node->getAttribute('expiration')
 					]);
 			}
-		} elseif ($node->getTag() == 'ack' && $node->getAttribute("class") == "message") {
-			$this->eventManager()->fire("onMessageReceivedServer",
-				[
+		} elseif ($node->getTag() == 'ack' && $node->getAttribute('class') == 'message') {
+			$this->eventManager()->fire('onMessageReceivedServer', [
 					$this->phoneNumber,
 					$node->getAttribute('from'),
 					$node->getAttribute('id'),
@@ -2617,10 +2571,9 @@ class Client
 					$node->getAttribute('t')
 				]);
 		} elseif ($node->getTag() == 'receipt') {
-			if ($node->hasChild("list")) {
-				foreach ($node->getChild("list")->getChildren() as $child) {
-					$this->eventManager()->fire("onMessageReceivedClient",
-						[
+			if ($node->hasChild('list')) {
+				foreach ($node->getChild('list')->getChildren() as $child) {
+					$this->eventManager()->fire('onMessageReceivedClient', [
 							$this->phoneNumber,
 							$node->getAttribute('from'),
 							$child->getAttribute('id'),
@@ -2631,8 +2584,7 @@ class Client
 				}
 			}
 
-			$this->eventManager()->fire("onMessageReceivedClient",
-				[
+			$this->eventManager()->fire('onMessageReceivedClient', [
 					$this->phoneNumber,
 					$node->getAttribute('from'),
 					$node->getAttribute('id'),
@@ -2643,7 +2595,7 @@ class Client
 
 			$this->sendAck($node, 'receipt');
 		}
-		if ($node->getTag() == "message") {
+		if ($node->getTag() == 'message') {
 			array_push($this->messageQueue, $node);
 
 			if ($node->hasChild('x') && $this->lastId == $node->getAttribute('id')) {
@@ -2652,59 +2604,57 @@ class Client
 			if ($this->newMsgBind && ($node->getChild('body') || $node->getChild('media'))) {
 				$this->newMsgBind->process($node);
 			}
-			if ($node->getAttribute('type') == "text" && $node->getChild('body') != null) {
-				$author = $node->getAttribute("participant");
+			if ($node->getAttribute('type') == 'text' && $node->getChild('body') != null) {
+				$author = $node->getAttribute('participant');
 				if ($autoReceipt) {
 					$this->sendReceipt($node, $type, $author);
 				}
 				if ($author == '') {
 					//private chat message
-					$this->eventManager()->fire("onGetMessage",
-						[
+					$this->eventManager()->fire('onGetMessage', [
 							$this->phoneNumber,
 							$node->getAttribute('from'),
 							$node->getAttribute('id'),
 							$node->getAttribute('type'),
 							$node->getAttribute('t'),
-							$node->getAttribute("notify"),
-							$node->getChild("body")->getData()
+							$node->getAttribute('notify'),
+							$node->getChild('body')->getData()
 						]);
 
 					if ($this->messageStore !== null) {
 						$this->messageStore->saveMessage(ExtractNumber($node->getAttribute('from')), $this->phoneNumber,
-							$node->getChild("body")->getData(), $node->getAttribute('id'), $node->getAttribute('t'));
+							$node->getChild('body')->getData(), $node->getAttribute('id'), $node->getAttribute('t'));
 					}
 				} else {
 					//group chat message
-					$this->eventManager()->fire("onGetGroupMessage",
-						[
+					$this->eventManager()->fire('onGetGroupMessage', [
 							$this->phoneNumber,
 							$node->getAttribute('from'),
 							$author,
 							$node->getAttribute('id'),
 							$node->getAttribute('type'),
 							$node->getAttribute('t'),
-							$node->getAttribute("notify"),
-							$node->getChild("body")->getData()
+							$node->getAttribute('notify'),
+							$node->getChild('body')->getData()
 						]);
 					if ($this->messageStore !== null) {
 						$this->messageStore->saveMessage($author, $node->getAttribute('from'),
-							$node->getChild("body")->getData(), $node->getAttribute('id'), $node->getAttribute('t'));
+							$node->getChild('body')->getData(), $node->getAttribute('id'), $node->getAttribute('t'));
 					}
 				}
 
 			}
-			if ($node->getAttribute('type') == "text" && $node->getChild(0)->getTag() == 'enc') {
+			if ($node->getAttribute('type') == 'text' && $node->getChild(0)->getTag() == 'enc') {
 				// TODO
 				if ($autoReceipt) {
 					$this->sendReceipt($node, $type);
 				}
 			}
-			if ($node->getAttribute('type') == "media" && $node->getChild('media') != null) {
-				if ($node->getChild("media")->getAttribute('type') == 'image') {
+			if ($node->getAttribute('type') == 'media' && $node->getChild('media') != null) {
+				if ($node->getChild('media')->getAttribute('type') == 'image') {
 
-					if ($node->getAttribute("participant") == null) {
-						$this->eventManager()->fire("onGetImage",
+					if ($node->getAttribute('participant') == null) {
+						$this->eventManager()->fire('onGetImage',
 							[
 								$this->phoneNumber,
 								$node->getAttribute('from'),
@@ -2712,18 +2662,18 @@ class Client
 								$node->getAttribute('type'),
 								$node->getAttribute('t'),
 								$node->getAttribute('notify'),
-								$node->getChild("media")->getAttribute('size'),
-								$node->getChild("media")->getAttribute('url'),
-								$node->getChild("media")->getAttribute('file'),
-								$node->getChild("media")->getAttribute('mimetype'),
-								$node->getChild("media")->getAttribute('filehash'),
-								$node->getChild("media")->getAttribute('width'),
-								$node->getChild("media")->getAttribute('height'),
-								$node->getChild("media")->getData(),
-								$node->getChild("media")->getAttribute('caption')
+								$node->getChild('media')->getAttribute('size'),
+								$node->getChild('media')->getAttribute('url'),
+								$node->getChild('media')->getAttribute('file'),
+								$node->getChild('media')->getAttribute('mimetype'),
+								$node->getChild('media')->getAttribute('filehash'),
+								$node->getChild('media')->getAttribute('width'),
+								$node->getChild('media')->getAttribute('height'),
+								$node->getChild('media')->getData(),
+								$node->getChild('media')->getAttribute('caption')
 							]);
 					} else {
-						$this->eventManager()->fire("onGetGroupImage",
+						$this->eventManager()->fire('onGetGroupImage',
 							[
 								$this->phoneNumber,
 								$node->getAttribute('from'),
@@ -2732,20 +2682,20 @@ class Client
 								$node->getAttribute('type'),
 								$node->getAttribute('t'),
 								$node->getAttribute('notify'),
-								$node->getChild("media")->getAttribute('size'),
-								$node->getChild("media")->getAttribute('url'),
-								$node->getChild("media")->getAttribute('file'),
-								$node->getChild("media")->getAttribute('mimetype'),
-								$node->getChild("media")->getAttribute('filehash'),
-								$node->getChild("media")->getAttribute('width'),
-								$node->getChild("media")->getAttribute('height'),
-								$node->getChild("media")->getData(),
-								$node->getChild("media")->getAttribute('caption')
+								$node->getChild('media')->getAttribute('size'),
+								$node->getChild('media')->getAttribute('url'),
+								$node->getChild('media')->getAttribute('file'),
+								$node->getChild('media')->getAttribute('mimetype'),
+								$node->getChild('media')->getAttribute('filehash'),
+								$node->getChild('media')->getAttribute('width'),
+								$node->getChild('media')->getAttribute('height'),
+								$node->getChild('media')->getData(),
+								$node->getChild('media')->getAttribute('caption')
 							]);
 					}
-				} elseif ($node->getChild("media")->getAttribute('type') == 'video') {
-					if ($node->getAttribute("participant") == null) {
-						$this->eventManager()->fire("onGetVideo",
+				} elseif ($node->getChild('media')->getAttribute('type') == 'video') {
+					if ($node->getAttribute('participant') == null) {
+						$this->eventManager()->fire('onGetVideo',
 							[
 								$this->phoneNumber,
 								$node->getAttribute('from'),
@@ -2753,19 +2703,19 @@ class Client
 								$node->getAttribute('type'),
 								$node->getAttribute('t'),
 								$node->getAttribute('notify'),
-								$node->getChild("media")->getAttribute('url'),
-								$node->getChild("media")->getAttribute('file'),
-								$node->getChild("media")->getAttribute('size'),
-								$node->getChild("media")->getAttribute('mimetype'),
-								$node->getChild("media")->getAttribute('filehash'),
-								$node->getChild("media")->getAttribute('duration'),
-								$node->getChild("media")->getAttribute('vcodec'),
-								$node->getChild("media")->getAttribute('acodec'),
-								$node->getChild("media")->getData(),
-								$node->getChild("media")->getAttribute('caption')
+								$node->getChild('media')->getAttribute('url'),
+								$node->getChild('media')->getAttribute('file'),
+								$node->getChild('media')->getAttribute('size'),
+								$node->getChild('media')->getAttribute('mimetype'),
+								$node->getChild('media')->getAttribute('filehash'),
+								$node->getChild('media')->getAttribute('duration'),
+								$node->getChild('media')->getAttribute('vcodec'),
+								$node->getChild('media')->getAttribute('acodec'),
+								$node->getChild('media')->getData(),
+								$node->getChild('media')->getAttribute('caption')
 							]);
 					} else {
-						$this->eventManager()->fire("onGetGroupVideo",
+						$this->eventManager()->fire('onGetGroupVideo',
 							[
 								$this->phoneNumber,
 								$node->getAttribute('from'),
@@ -2774,21 +2724,21 @@ class Client
 								$node->getAttribute('type'),
 								$node->getAttribute('t'),
 								$node->getAttribute('notify'),
-								$node->getChild("media")->getAttribute('url'),
-								$node->getChild("media")->getAttribute('file'),
-								$node->getChild("media")->getAttribute('size'),
-								$node->getChild("media")->getAttribute('mimetype'),
-								$node->getChild("media")->getAttribute('filehash'),
-								$node->getChild("media")->getAttribute('duration'),
-								$node->getChild("media")->getAttribute('vcodec'),
-								$node->getChild("media")->getAttribute('acodec'),
-								$node->getChild("media")->getData(),
-								$node->getChild("media")->getAttribute('caption')
+								$node->getChild('media')->getAttribute('url'),
+								$node->getChild('media')->getAttribute('file'),
+								$node->getChild('media')->getAttribute('size'),
+								$node->getChild('media')->getAttribute('mimetype'),
+								$node->getChild('media')->getAttribute('filehash'),
+								$node->getChild('media')->getAttribute('duration'),
+								$node->getChild('media')->getAttribute('vcodec'),
+								$node->getChild('media')->getAttribute('acodec'),
+								$node->getChild('media')->getData(),
+								$node->getChild('media')->getAttribute('caption')
 							]);
 					}
-				} elseif ($node->getChild("media")->getAttribute('type') == 'audio') {
-					$author = $node->getAttribute("participant");
-					$this->eventManager()->fire("onGetAudio",
+				} elseif ($node->getChild('media')->getAttribute('type') == 'audio') {
+					$author = $node->getAttribute('participant');
+					$this->eventManager()->fire('onGetAudio',
 						[
 							$this->phoneNumber,
 							$node->getAttribute('from'),
@@ -2796,26 +2746,26 @@ class Client
 							$node->getAttribute('type'),
 							$node->getAttribute('t'),
 							$node->getAttribute('notify'),
-							$node->getChild("media")->getAttribute('size'),
-							$node->getChild("media")->getAttribute('url'),
-							$node->getChild("media")->getAttribute('file'),
-							$node->getChild("media")->getAttribute('mimetype'),
-							$node->getChild("media")->getAttribute('filehash'),
-							$node->getChild("media")->getAttribute('seconds'),
-							$node->getChild("media")->getAttribute('acodec'),
+							$node->getChild('media')->getAttribute('size'),
+							$node->getChild('media')->getAttribute('url'),
+							$node->getChild('media')->getAttribute('file'),
+							$node->getChild('media')->getAttribute('mimetype'),
+							$node->getChild('media')->getAttribute('filehash'),
+							$node->getChild('media')->getAttribute('seconds'),
+							$node->getChild('media')->getAttribute('acodec'),
 							$author,
 						]);
-				} elseif ($node->getChild("media")->getAttribute('type') == 'vcard') {
-					if ($node->getChild("media")->hasChild('vcard')) {
-						$name = $node->getChild("media")->getChild("vcard")->getAttribute('name');
-						$data = $node->getChild("media")->getChild("vcard")->getData();
+				} elseif ($node->getChild('media')->getAttribute('type') == 'vcard') {
+					if ($node->getChild('media')->hasChild('vcard')) {
+						$name = $node->getChild('media')->getChild('vcard')->getAttribute('name');
+						$data = $node->getChild('media')->getChild('vcard')->getData();
 					} else {
-						$name = "NO_NAME";
-						$data = $node->getChild("media")->getData();
+						$name = 'NO_NAME';
+						$data = $node->getChild('media')->getData();
 					}
-					$author = $node->getAttribute("participant");
+					$author = $node->getAttribute('participant');
 
-					$this->eventManager()->fire("onGetvCard",
+					$this->eventManager()->fire('onGetvCard',
 						[
 							$this->phoneNumber,
 							$node->getAttribute('from'),
@@ -2827,12 +2777,12 @@ class Client
 							$data,
 							$author
 						]);
-				} elseif ($node->getChild("media")->getAttribute('type') == 'location') {
-					$url = $node->getChild("media")->getAttribute('url');
-					$name = $node->getChild("media")->getAttribute('name');
-					$author = $node->getAttribute("participant");
+				} elseif ($node->getChild('media')->getAttribute('type') == 'location') {
+					$url = $node->getChild('media')->getAttribute('url');
+					$name = $node->getChild('media')->getAttribute('name');
+					$author = $node->getAttribute('participant');
 
-					$this->eventManager()->fire("onGetLocation",
+					$this->eventManager()->fire('onGetLocation',
 						[
 							$this->phoneNumber,
 							$node->getAttribute('from'),
@@ -2841,10 +2791,10 @@ class Client
 							$node->getAttribute('t'),
 							$node->getAttribute('notify'),
 							$name,
-							$node->getChild("media")->getAttribute('longitude'),
-							$node->getChild("media")->getAttribute('latitude'),
+							$node->getChild('media')->getAttribute('longitude'),
+							$node->getChild('media')->getAttribute('latitude'),
 							$url,
-							$node->getChild("media")->getData(),
+							$node->getChild('media')->getData(),
 							$author
 						]);
 				}
@@ -2854,7 +2804,7 @@ class Client
 				}
 			}
 			if ($node->getChild('received') != null) {
-				$this->eventManager()->fire("onMessageReceivedClient",
+				$this->eventManager()->fire('onMessageReceivedClient',
 					[
 						$this->phoneNumber,
 						$node->getAttribute('from'),
@@ -2865,31 +2815,31 @@ class Client
 					]);
 			}
 		}
-		if ($node->getTag() == "presence" && $node->getAttribute("status") == "dirty") {
+		if ($node->getTag() == 'presence' && $node->getAttribute('status') == 'dirty') {
 			//clear dirty
 			$categories = [];
 			if (count($node->getChildren()) > 0) {
 				foreach ($node->getChildren() as $child) {
-					if ($child->getTag() == "category") {
-						$categories[] = $child->getAttribute("name");
+					if ($child->getTag() == 'category') {
+						$categories[] = $child->getAttribute('name');
 					}
 				}
 			}
 			$this->sendClearDirty($categories);
 		}
-		if (strcmp($node->getTag(), "presence") == 0
+		if (strcmp($node->getTag(), 'presence') == 0
 			&& strncmp($node->getAttribute('from'), $this->phoneNumber, strlen($this->phoneNumber)) != 0
-			&& strpos($node->getAttribute('from'), "-") === false
+			&& strpos($node->getAttribute('from'), '-') === false
 		) {
 			$presence = [];
 			if ($node->getAttribute('type') == null) {
-				$this->eventManager()->fire("onPresenceAvailable",
+				$this->eventManager()->fire('onPresenceAvailable',
 					[
 						$this->phoneNumber,
 						$node->getAttribute('from'),
 					]);
 			} else {
-				$this->eventManager()->fire("onPresenceUnavailable",
+				$this->eventManager()->fire('onPresenceUnavailable',
 					[
 						$this->phoneNumber,
 						$node->getAttribute('from'),
@@ -2897,21 +2847,21 @@ class Client
 					]);
 			}
 		}
-		if ($node->getTag() == "presence"
+		if ($node->getTag() == 'presence'
 			&& strncmp($node->getAttribute('from'), $this->phoneNumber, strlen($this->phoneNumber)) != 0
-			&& strpos($node->getAttribute('from'), "-") !== false
+			&& strpos($node->getAttribute('from'), '-') !== false
 			&& $node->getAttribute('type') != null
 		) {
 			$groupId = Constants::parseJID($node->getAttribute('from'));
 			if ($node->getAttribute('add') != null) {
-				$this->eventManager()->fire("onGroupsParticipantsAdd",
+				$this->eventManager()->fire('onGroupsParticipantsAdd',
 					[
 						$this->phoneNumber,
 						$groupId,
 						Constants::parseJID($node->getAttribute('add'))
 					]);
 			} elseif ($node->getAttribute('remove') != null) {
-				$this->eventManager()->fire("onGroupsParticipantsRemove",
+				$this->eventManager()->fire('onGroupsParticipantsRemove',
 					[
 						$this->phoneNumber,
 						$groupId,
@@ -2919,35 +2869,35 @@ class Client
 					]);
 			}
 		}
-		if (strcmp($node->getTag(), "chatstate") == 0
+		if (strcmp($node->getTag(), 'chatstate') == 0
 			&& strncmp($node->getAttribute('from'), $this->phoneNumber, strlen($this->phoneNumber)) != 0
-			&& strpos($node->getAttribute('from'), "-") === false
+			&& strpos($node->getAttribute('from'), '-') === false
 		) {
-			if ($node->getChild(0)->getTag() == "composing") {
-				$this->eventManager()->fire("onMessageComposing",
+			if ($node->getChild(0)->getTag() == 'composing') {
+				$this->eventManager()->fire('onMessageComposing',
 					[
 						$this->phoneNumber,
 						$node->getAttribute('from'),
 						$node->getAttribute('id'),
-						"composing",
+						'composing',
 						$node->getAttribute('t')
 					]);
 			} else {
-				$this->eventManager()->fire("onMessagePaused",
+				$this->eventManager()->fire('onMessagePaused',
 					[
 						$this->phoneNumber,
 						$node->getAttribute('from'),
 						$node->getAttribute('id'),
-						"paused",
+						'paused',
 						$node->getAttribute('t')
 					]);
 			}
 		}
 		if ($node->getTag() == 'iq'
 			&& $node->getAttribute('type') == 'get'
-			&& $node->getAttribute('xmlns') == "urn:xmpp:ping"
+			&& $node->getAttribute('xmlns') == 'urn:xmpp:ping'
 		) {
-			$this->eventManager()->fire("onPing",
+			$this->eventManager()->fire('onPing',
 				[
 					$this->phoneNumber,
 					$node->getAttribute('id')
@@ -2955,19 +2905,19 @@ class Client
 			$this->sendPong($node->getAttribute('id'));
 		}
 		if ($node->getTag() == 'iq'
-			&& $node->getChild("sync") != null
+			&& $node->getChild('sync') != null
 		) {
 
 			//sync result
 			$sync = $node->getChild('sync');
-			$existing = $sync->getChild("in");
-			$nonexisting = $sync->getChild("out");
+			$existing = $sync->getChild('in');
+			$nonexisting = $sync->getChild('out');
 
 			//process existing first
 			$existingUsers = [];
 			if (!empty($existing)) {
 				foreach ($existing->getChildren() as $child) {
-					$existingUsers[$child->getData()] = $child->getAttribute("jid");
+					$existingUsers[$child->getData()] = $child->getAttribute('jid');
 				}
 			}
 
@@ -2979,17 +2929,17 @@ class Client
 				}
 			}
 
-			$index = $sync->getAttribute("index");
+			$index = $sync->getAttribute('index');
 
-			$result = new SyncResult($index, $sync->getAttribute("sid"), $existingUsers, $failedNumbers);
+			$result = new SyncResult($index, $sync->getAttribute('sid'), $existingUsers, $failedNumbers);
 
-			$this->eventManager()->fire("onGetSyncResult",
+			$this->eventManager()->fire('onGetSyncResult',
 				[
 					$result
 				]);
 		}
-		if ($node->getTag() == "receipt") {
-			$this->eventManager()->fire("onGetReceipt",
+		if ($node->getTag() == 'receipt') {
+			$this->eventManager()->fire('onGetReceipt',
 				[
 					$node->getAttribute('from'),
 					$node->getAttribute('id'),
@@ -2998,15 +2948,15 @@ class Client
 				]);
 		}
 		if ($node->getTag() == 'iq'
-			&& $node->getAttribute('type') == "result"
+			&& $node->getAttribute('type') == 'result'
 		) {
-			if ($node->getChild("query") != null) {
+			if ($node->getChild('query') != null) {
 				if (isset($this->nodeId['privacy']) && ($this->nodeId['privacy'] == $node->getAttribute('id'))) {
 					$listChild = $node->getChild(0)->getChild(0);
 					foreach ($listChild->getChildren() as $child) {
 						$blockedJids[] = $child->getAttribute('value');
 					}
-					$this->eventManager()->fire("onGetPrivacyBlockedList",
+					$this->eventManager()->fire('onGetPrivacyBlockedList',
 						[
 							$this->phoneNumber,
 							$blockedJids
@@ -3014,7 +2964,7 @@ class Client
 
 					return;
 				}
-				$this->eventManager()->fire("onGetRequestLastSeen",
+				$this->eventManager()->fire('onGetRequestLastSeen',
 					[
 						$this->phoneNumber,
 						$node->getAttribute('from'),
@@ -3022,32 +2972,32 @@ class Client
 						$node->getChild(0)->getAttribute('seconds')
 					]);
 			}
-			if ($node->getChild("props") != null) {
+			if ($node->getChild('props') != null) {
 				//server properties
 				$props = [];
 				foreach ($node->getChild(0)->getChildren() as $child) {
-					$props[$child->getAttribute("name")] = $child->getAttribute("value");
+					$props[$child->getAttribute('name')] = $child->getAttribute('value');
 				}
-				$this->eventManager()->fire("onGetServerProperties",
+				$this->eventManager()->fire('onGetServerProperties',
 					[
 						$this->phoneNumber,
-						$node->getChild(0)->getAttribute("version"),
+						$node->getChild(0)->getAttribute('version'),
 						$props
 					]);
 			}
-			if ($node->getChild("picture") != null) {
-				$this->eventManager()->fire("onGetProfilePicture",
+			if ($node->getChild('picture') != null) {
+				$this->eventManager()->fire('onGetProfilePicture',
 					[
 						$this->phoneNumber,
-						$node->getAttribute("from"),
-						$node->getChild("picture")->getAttribute('type'),
-						$node->getChild("picture")->getData()
+						$node->getAttribute('from'),
+						$node->getChild('picture')->getAttribute('type'),
+						$node->getChild('picture')->getData()
 					]);
 			}
-			if ($node->getChild("media") != null || $node->getChild("duplicate") != null) {
+			if ($node->getChild('media') != null || $node->getChild('duplicate') != null) {
 				$this->processUploadResponse($node);
 			}
-			if (strpos($node->getAttribute("from"), Constants::WHATSAPP_GROUP_SERVER) !== false) {
+			if (strpos($node->getAttribute('from'), Constants::WHATSAPP_GROUP_SERVER) !== false) {
 				//There are multiple types of Group reponses. Also a valid group response can have NO children.
 				//Events fired depend on text in the ID field.
 				$groupList = [];
@@ -3060,7 +3010,7 @@ class Client
 				}
 				if (isset($this->nodeId['groupcreate']) && ($this->nodeId['groupcreate'] == $node->getAttribute('id'))) {
 					$this->groupId = $node->getChild(0)->getAttribute('id');
-					$this->eventManager()->fire("onGroupsChatCreate",
+					$this->eventManager()->fire('onGroupsChatCreate',
 						[
 							$this->phoneNumber,
 							$this->groupId
@@ -3068,14 +3018,14 @@ class Client
 				}
 				if (isset($this->nodeId['leavegroup']) && ($this->nodeId['leavegroup'] == $node->getAttribute('id'))) {
 					$this->groupId = $node->getChild(0)->getChild(0)->getAttribute('id');
-					$this->eventManager()->fire("onGroupsChatEnd",
+					$this->eventManager()->fire('onGroupsChatEnd',
 						[
 							$this->phoneNumber,
 							$this->groupId
 						]);
 				}
 				if (isset($this->nodeId['getgroups']) && ($this->nodeId['getgroups'] == $node->getAttribute('id'))) {
-					$this->eventManager()->fire("onGetGroups",
+					$this->eventManager()->fire('onGetGroups',
 						[
 							$this->phoneNumber,
 							$groupList
@@ -3103,7 +3053,7 @@ class Client
 						if ($list->getChildren() != null) {
 							foreach ($list->getChildren() as $sublist) {
 								$id = $sublist->getAttribute('id');
-								$name = $sublist->getAttribute("name");
+								$name = $sublist->getAttribute('name');
 								$broadcastLists[$id]['name'] = $name;
 								$recipients = [];
 								foreach ($sublist->getChildren() as $recipient) {
@@ -3114,55 +3064,55 @@ class Client
 						}
 					}
 				}
-				$this->eventManager()->fire("onGetBroadcastLists",
+				$this->eventManager()->fire('onGetBroadcastLists',
 					[
 						$this->phoneNumber,
 						$broadcastLists
 					]);
 			}
-			if ($node->getChild("pricing") != null) {
-				$this->eventManager()->fire("onGetServicePricing",
+			if ($node->getChild('pricing') != null) {
+				$this->eventManager()->fire('onGetServicePricing',
 					[
 						$this->phoneNumber,
-						$node->getChild(0)->getAttribute("price"),
-						$node->getChild(0)->getAttribute("cost"),
-						$node->getChild(0)->getAttribute("currency"),
-						$node->getChild(0)->getAttribute("expiration")
+						$node->getChild(0)->getAttribute('price'),
+						$node->getChild(0)->getAttribute('cost'),
+						$node->getChild(0)->getAttribute('currency'),
+						$node->getChild(0)->getAttribute('expiration')
 					]);
 			}
-			if ($node->getChild("extend") != null) {
-				$this->eventManager()->fire("onGetExtendAccount",
+			if ($node->getChild('extend') != null) {
+				$this->eventManager()->fire('onGetExtendAccount',
 					[
 						$this->phoneNumber,
-						$node->getChild("account")->getAttribute("kind"),
-						$node->getChild("account")->getAttribute("status"),
-						$node->getChild("account")->getAttribute("creation"),
-						$node->getChild("account")->getAttribute("expiration")
+						$node->getChild('account')->getAttribute('kind'),
+						$node->getChild('account')->getAttribute('status'),
+						$node->getChild('account')->getAttribute('creation'),
+						$node->getChild('account')->getAttribute('expiration')
 					]);
 			}
-			if ($node->getChild("normalize") != null) {
-				$this->eventManager()->fire("onGetNormalizedJid",
+			if ($node->getChild('normalize') != null) {
+				$this->eventManager()->fire('onGetNormalizedJid',
 					[
 						$this->phoneNumber,
-						$node->getChild(0)->getAttribute("result")
+						$node->getChild(0)->getAttribute('result')
 					]);
 			}
-			if ($node->getChild("status") != null) {
-				$child = $node->getChild("status");
+			if ($node->getChild('status') != null) {
+				$child = $node->getChild('status');
 				foreach ($child->getChildren() as $status) {
-					$this->eventManager()->fire("onGetStatus",
+					$this->eventManager()->fire('onGetStatus',
 						[
 							$this->phoneNumber,
-							$status->getAttribute("jid"),
-							"requested",
+							$status->getAttribute('jid'),
+							'requested',
 							$node->getAttribute('id'),
-							$status->getAttribute("t"),
+							$status->getAttribute('t'),
 							$status->getData()
 						]);
 				}
 			}
 		}
-		if ($node->getTag() == 'iq' && $node->getAttribute('type') == "error") {
+		if ($node->getTag() == 'iq' && $node->getAttribute('type') == 'error') {
 			$errorType = null;
 			foreach ($this->nodeId AS $type => $nodeID) {
 				if ($nodeID == $node->getAttribute('id')) {
@@ -3170,7 +3120,7 @@ class Client
 					break;
 				}
 			}
-			$this->eventManager()->fire("onGetError",
+			$this->eventManager()->fire('onGetError',
 				[
 					$this->phoneNumber,
 					$node->getAttribute('from'),
@@ -3180,18 +3130,18 @@ class Client
 				]);
 		}
 
-		if ($node->getTag() == "message" && $node->getAttribute('type') == "media" && $node->getChild(0)->getAttribute('type') == "image") {
+		if ($node->getTag() == 'message' && $node->getAttribute('type') == 'media' && $node->getChild(0)->getAttribute('type') == 'image') {
 			$msgId = $this->createIqId();
 
-			$ackNode = new ProtocolNode("ack",
+			$ackNode = new ProtocolNode('ack',
 				[
-					"url" => $node->getChild(0)->getAttribute('url')
+					'url' => $node->getChild(0)->getAttribute('url')
 				], null, null);
 
 			$iqNode = new ProtocolNode('iq',
 				[
 					'id' => $msgId,
-					'xmlns' => "w:m",
+					'xmlns' => 'w:m',
 					'type' => 'set',
 					'to' => Constants::WHATSAPP_SERVER
 				], [$ackNode], null);
@@ -3200,38 +3150,38 @@ class Client
 		}
 
 		$children = $node->getChild(0);
-		if ($node->getTag() == "stream:error" && !empty($children) && $node->getChild(0)->getTag() == "system-shutdown") {
-			$this->eventManager()->fire("onStreamError",
+		if ($node->getTag() == 'stream:error' && !empty($children) && $node->getChild(0)->getTag() == 'system-shutdown') {
+			$this->eventManager()->fire('onStreamError',
 				[
 					$node->getChild(0)->getTag()
 				]);
 		}
 
-		if ($node->getTag() == "stream:error") {
-			$this->eventManager()->fire("onStreamError",
+		if ($node->getTag() == 'stream:error') {
+			$this->eventManager()->fire('onStreamError',
 				[
 					$node->getChild(0)->getTag()
 				]);
 		}
 
-		if ($node->getTag() == "notification") {
-			$name = $node->getAttribute("notify");
+		if ($node->getTag() == 'notification') {
+			$name = $node->getAttribute('notify');
 			$type = $node->getAttribute('type');
 			switch ($type) {
-				case "status":
-					$this->eventManager()->fire("onGetStatus",
+				case 'status':
+					$this->eventManager()->fire('onGetStatus',
 						[
 							$this->phoneNumber, //my number
-							$node->getAttribute("from"),
+							$node->getAttribute('from'),
 							$node->getChild(0)->getTag(),
 							$node->getAttribute('id'),
-							$node->getAttribute("t"),
+							$node->getAttribute('t'),
 							$node->getChild(0)->getData()
 						]);
 					break;
-				case "picture":
+				case 'picture':
 					if ($node->hasChild('set')) {
-						$this->eventManager()->fire("onProfilePictureChanged",
+						$this->eventManager()->fire('onProfilePictureChanged',
 							[
 								$this->phoneNumber,
 								$node->getAttribute('from'),
@@ -3240,7 +3190,7 @@ class Client
 							]);
 					} else {
 						if ($node->hasChild('delete')) {
-							$this->eventManager()->fire("onProfilePictureDeleted",
+							$this->eventManager()->fire('onProfilePictureDeleted',
 								[
 									$this->phoneNumber,
 									$node->getAttribute('from'),
@@ -3251,44 +3201,44 @@ class Client
 					}
 					//TODO
 					break;
-				case "contacts":
+				case 'contacts':
 					$notification = $node->getChild(0)->getTag();
 					if ($notification == 'add') {
-						$this->eventManager()->fire("onNumberWasAdded",
+						$this->eventManager()->fire('onNumberWasAdded',
 							[
 								$this->phoneNumber,
 								$node->getChild(0)->getAttribute('jid')
 							]);
 					} elseif ($notification == 'remove') {
-						$this->eventManager()->fire("onNumberWasRemoved",
+						$this->eventManager()->fire('onNumberWasRemoved',
 							[
 								$this->phoneNumber,
 								$node->getChild(0)->getAttribute('jid')
 							]);
 					} elseif ($notification == 'update') {
-						$this->eventManager()->fire("onNumberWasUpdated",
+						$this->eventManager()->fire('onNumberWasUpdated',
 							[
 								$this->phoneNumber,
 								$node->getChild(0)->getAttribute('jid')
 							]);
 					}
 					break;
-				case "encrypt":
+				case 'encrypt':
 					$value = $node->getChild(0)->getAttribute('value');
 					if (is_numeric($value)) {
-						$this->eventManager()->fire("onGetKeysLeft",
+						$this->eventManager()->fire('onGetKeysLeft',
 							[
 								$this->phoneNumber,
 								$node->getChild(0)->getAttribute('value')
 							]);
 					} else {
-						echo "Corrupt Stream: value " . $value . "is not numeric";
+						echo 'Corrupt Stream: value ' . $value . 'is not numeric';
 					}
 					break;
-				case "w:gp2":
+				case 'w:gp2':
 					if ($node->hasChild('remove')) {
 						if ($node->getChild(0)->hasChild('participant')) {
-							$this->eventManager()->fire("onGroupsParticipantsRemove",
+							$this->eventManager()->fire('onGroupsParticipantsRemove',
 								[
 									$this->phoneNumber,
 									$node->getAttribute('from'),
@@ -3297,7 +3247,7 @@ class Client
 						}
 					} else {
 						if ($node->hasChild('add')) {
-							$this->eventManager()->fire("onGroupsParticipantsAdd",
+							$this->eventManager()->fire('onGroupsParticipantsAdd',
 								[
 									$this->phoneNumber,
 									$node->getAttribute('from'),
@@ -3309,7 +3259,7 @@ class Client
 								foreach ($node->getChild(0)->getChild(0)->getChildren() AS $cn) {
 									$groupMembers[] = $cn->getAttribute('jid');
 								}
-								$this->eventManager()->fire("onGroupisCreated",
+								$this->eventManager()->fire('onGroupisCreated',
 									[
 										$this->phoneNumber,
 										$node->getChild(0)->getChild(0)->getAttribute('creator'),
@@ -3321,7 +3271,7 @@ class Client
 									]);
 							} else {
 								if ($node->hasChild('subject')) {
-									$this->eventManager()->fire("onGetGroupsSubject",
+									$this->eventManager()->fire('onGetGroupsSubject',
 										[
 											$this->phoneNumber,
 											$node->getAttribute('from'),
@@ -3336,7 +3286,7 @@ class Client
 										foreach ($node->getChild(0)->getChildren() AS $cn) {
 											$promotedJIDs[] = $cn->getAttribute('jid');
 										}
-										$this->eventManager()->fire("onGroupsParticipantsPromote",
+										$this->eventManager()->fire('onGroupsParticipantsPromote',
 											[
 												$this->phoneNumber,
 												$node->getAttribute('from'),        //Group-JID
@@ -3352,13 +3302,13 @@ class Client
 						}
 					}
 					break;
-				case "account":
+				case 'account':
 					if (($node->getChild(0)->getAttribute('author')) == '') {
-						$author = "Paypal";
+						$author = 'Paypal';
 					} else {
 						$author = $node->getChild(0)->getAttribute('author');
 					}
-					$this->eventManager()->fire("onPaidAccount",
+					$this->eventManager()->fire('onPaidAccount',
 						[
 							$this->phoneNumber,
 							$author,
@@ -3368,9 +3318,9 @@ class Client
 							$node->getChild(0)->getChild(0)->getAttribute('expiration')
 						]);
 					break;
-				case "features":
-					if ($node->getChild(0)->getChild(0) == "encrypt") {
-						$this->eventManager()->fire("onGetFeature",
+				case 'features':
+					if ($node->getChild(0)->getChild(0) == 'encrypt') {
+						$this->eventManager()->fire('onGetFeature',
 							[
 								$this->phoneNumber,
 								$node->getAttribute('from'),
@@ -3378,10 +3328,10 @@ class Client
 							]);
 					}
 					break;
-				case "web":
+				case 'web':
 					if (($node->getChild(0)->getTag() == 'action') && ($node->getChild(0)->getAttribute('type') == 'sync')) {
 						$data = $node->getChild(0)->getChildren();
-						$this->eventManager()->fire("onWebSync",
+						$this->eventManager()->fire('onWebSync',
 							[
 								$this->phoneNumber,
 								$node->getAttribute('from'),
@@ -3393,56 +3343,56 @@ class Client
 					}
 					break;
 				default:
-					throw new Exception("Method $type not implemented");
+					throw new Exception('Method $type not implemented');
 			}
 			$this->sendAck($node, 'notification');
 		}
-		if ($node->getTag() == "call") {
-			if ($node->getChild(0)->getTag() == "offer") {
-				$callId = $node->getChild(0)->getAttribute("call-id");
+		if ($node->getTag() == 'call') {
+			if ($node->getChild(0)->getTag() == 'offer') {
+				$callId = $node->getChild(0)->getAttribute('call-id');
 				$this->sendReceipt($node, null, null, $callId);
 
-				$this->eventManager()->fire("onCallReceived",
+				$this->eventManager()->fire('onCallReceived',
 					[
 						$this->phoneNumber,
-						$node->getAttribute("from"),
+						$node->getAttribute('from'),
 						$node->getAttribute('id'),
-						$node->getAttribute("notify"),
-						$node->getAttribute("t"),
-						$node->getChild(0)->getAttribute("call-id")
+						$node->getAttribute('notify'),
+						$node->getAttribute('t'),
+						$node->getChild(0)->getAttribute('call-id')
 					]);
 			} else {
 				$this->sendAck($node, 'call');
 			}
 
 		}
-		if ($node->getTag() == "ib") {
+		if ($node->getTag() == 'ib') {
 			foreach ($node->getChildren() as $child) {
 				switch ($child->getTag()) {
-					case "dirty":
+					case 'dirty':
 						$this->sendClearDirty([$child->getAttribute('type')]);
 						break;
-					case "account":
-						$this->eventManager()->fire("onPaymentRecieved",
+					case 'account':
+						$this->eventManager()->fire('onPaymentRecieved',
 							[
 								$this->phoneNumber,
-								$child->getAttribute("kind"),
-								$child->getAttribute("status"),
-								$child->getAttribute("creation"),
-								$child->getAttribute("expiration")
+								$child->getAttribute('kind'),
+								$child->getAttribute('status'),
+								$child->getAttribute('creation'),
+								$child->getAttribute('expiration')
 							]);
 						break;
-					case "offline":
+					case 'offline':
 
 						break;
 					default:
-						throw new Exception("ib handler for " . $child->getTag() . " not implemented");
+						throw new Exception('ib handler for ' . $child->getTag() . ' not implemented');
 				}
 			}
 		}
 
 		// Disconnect socket on stream error.
-		if ($node->getTag() == "stream:error") {
+		if ($node->getTag() == 'stream:error') {
 			$this->disconnect();
 		}
 	}
@@ -3453,27 +3403,27 @@ class Client
 	 */
 	protected function sendAck($node, $class)
 	{
-		$from = $node->getAttribute("from");
+		$from = $node->getAttribute('from');
 		$to = $node->getAttribute('to');
-		$participant = $node->getAttribute("participant");
+		$participant = $node->getAttribute('participant');
 		$id = $node->getAttribute('id');
 		$type = $node->getAttribute('type');
 
 		$attributes = [];
 		if ($to) {
-			$attributes["from"] = $to;
+			$attributes['from'] = $to;
 		}
 		if ($participant) {
-			$attributes["participant"] = $participant;
+			$attributes['participant'] = $participant;
 		}
 		$attributes['to'] = $from;
-		$attributes["class"] = $class;
+		$attributes['class'] = $class;
 		$attributes['id'] = $id;
 		if ($type != null) {
 			$attributes['type'] = $type;
 		}
 
-		$ack = new ProtocolNode("ack", $attributes, null, null);
+		$ack = new ProtocolNode('ack', $attributes);
 
 		$this->sendNode($ack);
 	}
@@ -3485,11 +3435,11 @@ class Client
 	 */
 	protected function processMediaImage($node)
 	{
-		$media = $node->getChild("media");
+		$media = $node->getChild('media');
 
 		if ($media != null) {
-			$filename = $media->getAttribute("file");
-			$url = $media->getAttribute("url");
+			$filename = $media->getAttribute('file');
+			$url = $media->getAttribute('url');
 
 			//save thumbnail
 			file_put_contents(__DIR__ . DIRECTORY_SEPARATOR . Constants::DATA_FOLDER . DIRECTORY_SEPARATOR . Constants::MEDIA_FOLDER . DIRECTORY_SEPARATOR . 'thumb_' . $filename,
@@ -3507,10 +3457,10 @@ class Client
 	 */
 	protected function processProfilePicture($node)
 	{
-		$pictureNode = $node->getChild("picture");
+		$pictureNode = $node->getChild('picture');
 
 		if ($pictureNode != null) {
-			if ($pictureNode->getAttribute('type') == "preview") {
+			if ($pictureNode->getAttribute('type') == 'preview') {
 				$filename = __DIR__ . DIRECTORY_SEPARATOR . Constants::DATA_FOLDER . DIRECTORY_SEPARATOR . Constants::PICTURES_FOLDER . DIRECTORY_SEPARATOR . 'preview_' . $node->getAttribute('from') . 'jpg';
 			} else {
 				$filename = __DIR__ . DIRECTORY_SEPARATOR . Constants::DATA_FOLDER . DIRECTORY_SEPARATOR . Constants::PICTURES_FOLDER . DIRECTORY_SEPARATOR . $node->getAttribute('from') . '.jpg';
@@ -3554,29 +3504,29 @@ class Client
 		$messageNode = @$this->mediaQueue[$id];
 		if ($messageNode == null) {
 			//message not found, can't send!
-			$this->eventManager()->fire("onMediaUploadFailed",
+			$this->eventManager()->fire('onMediaUploadFailed',
 				[
 					$this->phoneNumber,
 					$id,
 					$node,
 					$messageNode,
-					"Message node not found in queue"
+					'Message node not found in queue'
 				]);
 
 			return false;
 		}
 
-		$duplicate = $node->getChild("duplicate");
+		$duplicate = $node->getChild('duplicate');
 		if ($duplicate != null) {
 			//file already on whatsapp servers
-			$url = $duplicate->getAttribute("url");
-			$filesize = $duplicate->getAttribute("size");
-//          $mimetype = $duplicate->getAttribute("mimetype");
-			$filehash = $duplicate->getAttribute("filehash");
+			$url = $duplicate->getAttribute('url');
+			$filesize = $duplicate->getAttribute('size');
+//          $mimetype = $duplicate->getAttribute('mimetype');
+			$filehash = $duplicate->getAttribute('filehash');
 			$filetype = $duplicate->getAttribute('type');
-//          $width = $duplicate->getAttribute("width");
-//          $height = $duplicate->getAttribute("height");
-			$exploded = explode("/", $url);
+//          $width = $duplicate->getAttribute('width');
+//          $height = $duplicate->getAttribute('height');
+			$exploded = explode('/', $url);
 			$filename = array_pop($exploded);
 		} else {
 			//upload new file
@@ -3584,13 +3534,13 @@ class Client
 
 			if (!$json) {
 				//failed upload
-				$this->eventManager()->fire("onMediaUploadFailed",
+				$this->eventManager()->fire('onMediaUploadFailed',
 					[
 						$this->phoneNumber,
 						$id,
 						$node,
 						$messageNode,
-						"Failed to push file to server"
+						'Failed to push file to server'
 					]);
 
 				return false;
@@ -3608,23 +3558,23 @@ class Client
 
 		$mediaAttribs = [];
 		$mediaAttribs['type'] = $filetype;
-		$mediaAttribs["url"] = $url;
-		$mediaAttribs["encoding"] = "raw";
-		$mediaAttribs["file"] = $filename;
-		$mediaAttribs["size"] = $filesize;
+		$mediaAttribs['url'] = $url;
+		$mediaAttribs['encoding'] = 'raw';
+		$mediaAttribs['file'] = $filename;
+		$mediaAttribs['size'] = $filesize;
 		if ($this->mediaQueue[$id]['caption'] != '') {
-			$mediaAttribs["caption"] = $this->mediaQueue[$id]['caption'];
+			$mediaAttribs['caption'] = $this->mediaQueue[$id]['caption'];
 		}
 
 		$filepath = $this->mediaQueue[$id]['filePath'];
 		$to = $this->mediaQueue[$id]['to'];
 
 		switch ($filetype) {
-			case "image":
+			case 'image':
 				$caption = $this->mediaQueue[$id]['caption'];
 				$icon = createIcon($filepath);
 				break;
-			case "video":
+			case 'video':
 				$caption = $this->mediaQueue[$id]['caption'];
 				$icon = createVideoIcon($filepath);
 				break;
@@ -3636,13 +3586,13 @@ class Client
 		//Retrieve Message ID
 		$message_id = $messageNode['message_id'];
 
-		$mediaNode = new ProtocolNode("media", $mediaAttribs, null, $icon);
+		$mediaNode = new ProtocolNode('media', $mediaAttribs, null, $icon);
 		if (is_array($to)) {
-			$this->sendBroadcast($to, $mediaNode, "media");
+			$this->sendBroadcast($to, $mediaNode, 'media');
 		} else {
 			$this->sendMessageNode($to, $mediaNode, $message_id);
 		}
-		$this->eventManager()->fire("onMediaMessageSent",
+		$this->eventManager()->fire('onMediaMessageSent',
 			[
 				$this->phoneNumber,
 				$to,
@@ -3670,10 +3620,10 @@ class Client
 		if ($this->socket != null) {
 			$header = @socket_read($this->socket, 3);//read stanza header
 			if ($header === false) {
-				$error = "socket EOF, closing socket...";
+				$error = 'socket EOF, closing socket...';
 				socket_close($this->socket);
 				$this->socket = null;
-				$this->eventManager()->fire("onClose",
+				$this->eventManager()->fire('onClose',
 					[
 						$this->phoneNumber,
 						$error
@@ -3686,7 +3636,7 @@ class Client
 				return;
 			}
 			if (strlen($header) != 3) {
-				throw new ConnectionException("Failed to read stanza header");
+				throw new ConnectionException('Failed to read stanza header');
 			}
 			$treeLength = (ord($header[0]) & 0x0F) << 16;
 			$treeLength |= ord($header[1]) << 8;
@@ -3708,11 +3658,11 @@ class Client
 			}
 
 			if (strlen($buff) != $treeLength) {
-				throw new ConnectionException("Tree length did not match received length (buff = " . strlen($buff) . " & treeLength = $treeLength)");
+				throw new ConnectionException('Tree length did not match received length (buff = ' . strlen($buff) . " & treeLength = $treeLength)");
 			}
 			$buff = $header . $buff;
 		} else {
-			$this->eventManager()->fire("onDisconnect",
+			$this->eventManager()->fire('onDisconnect',
 				[
 					$this->phoneNumber,
 					$this->socket
@@ -3745,7 +3695,7 @@ class Client
 	) {
 		if ($this->getMediaFile($filepath, $maxSize) == true) {
 			if (in_array($this->mediaFileInfo['fileextension'], $allowedExtensions)) {
-				$b64hash = base64_encode(hash_file("sha256", $this->mediaFileInfo['filepath'], true));
+				$b64hash = base64_encode(hash_file('sha256', $this->mediaFileInfo['filepath'], true));
 				//request upload and get Message ID
 				$id = $this->sendRequestFileUpload($b64hash, $type, $this->mediaFileInfo['filesize'],
 					$this->mediaFileInfo['filepath'], $to, $caption);
@@ -3781,18 +3731,18 @@ class Client
 		$toNodes = [];
 		foreach ($targets as $target) {
 			$jid = $this->getJID($target);
-			$hash = ["jid" => $jid];
+			$hash = ['jid' => $jid];
 			$toNode = new ProtocolNode('to', $hash, null, null);
 			$toNodes[] = $toNode;
 		}
 
-		$broadcastNode = new ProtocolNode("broadcast", null, $toNodes, null);
+		$broadcastNode = new ProtocolNode('broadcast', null, $toNodes, null);
 
 		$msgId = $this->createMsgId();
 
-		$messageNode = new ProtocolNode("message",
+		$messageNode = new ProtocolNode('message',
 			[
-				'to' => time() . "@broadcast",
+				'to' => time() . '@broadcast',
 				'type' => $type,
 				'id' => $msgId
 			], [$node, $broadcastNode], null);
@@ -3800,7 +3750,7 @@ class Client
 		$this->sendNode($messageNode);
 		$this->waitForServer($msgId);
 		//listen for response
-		$this->eventManager()->fire("onSendMessage",
+		$this->eventManager()->fire('onSendMessage',
 			[
 				$this->phoneNumber,
 				$targets,
@@ -3815,7 +3765,7 @@ class Client
 	 * Send data to the WhatsApp server.
 	 * @param string $data
 	 *
-	 * @throws Exception
+	 * @throws ConnectionException
 	 */
 	protected function sendData($data)
 	{
@@ -3839,7 +3789,7 @@ class Client
 			[
 				'id' => $msgID,
 				'type' => 'get',
-				'xmlns' => "w:g2",
+				'xmlns' => 'w:g2',
 				'to' => Constants::WHATSAPP_GROUP_SERVER
 			], [$child], null);
 
@@ -3890,7 +3840,7 @@ class Client
 		$msgId = ($id == null) ? $this->createMsgId() : $id;
 		$to = $this->getJID($to);
 
-		$messageNode = new ProtocolNode("message", [
+		$messageNode = new ProtocolNode('message', [
 			'to' => $to,
 			'type' => ($node->getTag() == 'body') ? 'text' : 'media',
 			'id' => $msgId,
@@ -4019,8 +3969,8 @@ class Client
 		$data = preprocessProfilePicture($filepath);
 		$preview = createIconGD($filepath, 96, true);
 
-		$picture = new ProtocolNode("picture", ['type' => "image"], null, $data);
-		$preview = new ProtocolNode("picture", ['type' => "preview"], null, $preview);
+		$picture = new ProtocolNode('picture', ['type' => 'image'], null, $data);
+		$preview = new ProtocolNode('picture', ['type' => 'preview'], null, $preview);
 
 		$node = new ProtocolNode('iq', [
 			'id' => $nodeID,
