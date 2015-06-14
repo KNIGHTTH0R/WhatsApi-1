@@ -3,9 +3,9 @@
 namespace WhatsApi;
 
 /**
- * Class rc4
+ * Class Rc4
  */
-class rc4
+class Rc4
 {
 	/**
 	 * @var array

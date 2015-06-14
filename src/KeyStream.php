@@ -16,7 +16,7 @@ class KeyStream
 	 */
 	const DROP = 768;
 	/**
-	 * @var rc4
+	 * @var Rc4
 	 */
 	private $rc4;
 	/**
@@ -34,7 +34,7 @@ class KeyStream
 	 */
 	public function __construct($key, $macKey)
 	{
-		$this->rc4 = new rc4($key, self::DROP);
+		$this->rc4 = new Rc4($key, self::DROP);
 		$this->macKey = $macKey;
 	}
 
