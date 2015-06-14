@@ -10,13 +10,14 @@
     {
       "role": "Contributors",
       "name": "WhatsApi Contributing Team",
-      "homepage": "https://github.com/aracoool/whatsapi/graphs/contributors"
+      "homepage": "https://github.com/ARACOOOL/WhatsApi/graphs/contributors"
     }
   ],
   "support": {
-    "issues": "https://github.com/aracoool/whatsapi/issues",
-    "wiki": "https://github.com/aracoool/whatsapi/wiki",
-    "source": "https://github.com/aracoool/whatsapi"
+    "issues": "https://github.com/ARACOOOL/WhatsApi/issues",
+    "wiki": "https://github.com/ARACOOOL/WhatsApi/wiki",
+    "source": "https://github.com/ARACOOOL/WhatsApi",
+    "original":"https://github.com/WHAnonymous/Chat-API"
   },
   "autoload": {
     "psr-4": {
@@ -24,7 +25,7 @@
     }
   },
   "require": {
-    "php": ">=5.3",
+    "php": ">=5.4",
     "ext-curl": "*",
     "ext-gd": "*",
     "ext-sockets": "*",

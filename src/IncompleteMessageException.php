@@ -1,37 +1,39 @@
 <?php
 
+namespace WhatsApi;
+
 /**
  * Class IncompleteMessageException
  */
 class IncompleteMessageException extends CustomException
 {
-    /**
-     * @var
-     */
-    private $input;
+	/**
+	 * @var
+	 */
+	private $input;
 
-    /**
-     * @param null $message
-     * @param int $code
-     */
-    public function __construct($message = null, $code = 0)
-    {
-        parent::__construct($message, $code);
-    }
+	/**
+	 * @param null $message
+	 * @param int $code
+	 */
+	public function __construct($message = null, $code = 0)
+	{
+		parent::__construct($message, $code);
+	}
 
-    /**
-     * @param $input
-     */
-    public function setInput($input)
-    {
-        $this->input = $input;
-    }
+	/**
+	 * @param $input
+	 */
+	public function setInput($input)
+	{
+		$this->input = $input;
+	}
 
-    /**
-     * @return mixed
-     */
-    public function getInput()
-    {
-        return $this->input;
-    }
+	/**
+	 * @return mixed
+	 */
+	public function getInput()
+	{
+		return $this->input;
+	}
 }

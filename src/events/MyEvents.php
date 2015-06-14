@@ -1,27 +1,28 @@
 <?php
+namespace WhatsApi\events;
 
 /**
  * Class MyEvents
  */
 class MyEvents extends AllEvents
 {
-    /**
-     * This is a list of all current events. Uncomment the ones you wish to listen to.
-     * Every event that is uncommented - should then have a function below.
-     * @var array
-     */
-    public $activeEvents = array(
+	/**
+	 * This is a list of all current events. Uncomment the ones you wish to listen to.
+	 * Every event that is uncommented - should then have a function below.
+	 * @var array
+	 */
+	public $activeEvents = [
 //        'onClose',
 //        'onCodeRegister',
 //        'onCodeRegisterFailed',
 //        'onCodeRequest',
 //        'onCodeRequestFailed',
 //        'onCodeRequestFailedTooRecent',
-        'onConnect',
+		'onConnect',
 //        'onConnectError',
 //        'onCredentialsBad',
 //        'onCredentialsGood',
-        'onDisconnect',
+		'onDisconnect',
 //        'onDissectPhone',
 //        'onDissectPhoneFailed',
 //        'onGetAudio',
@@ -77,23 +78,23 @@ class MyEvents extends AllEvents
 //        'onStreamError',
 //        'onUploadFile',
 //        'onUploadFileFailed',
-    );
+	];
 
-    /**
-     * @param $mynumber
-     * @param $socket
-     */
-    public function onConnect($mynumber, $socket)
-    {
-        echo "<p>WooHoo!, Phone number $mynumber connected successfully!</p>";
-    }
+	/**
+	 * @param $mynumber
+	 * @param $socket
+	 */
+	public function onConnect($mynumber, $socket)
+	{
+		echo "<p>WooHoo!, Phone number $mynumber connected successfully!</p>";
+	}
 
-    /**
-     * @param $mynumber
-     * @param $socket
-     */
-    public function onDisconnect($mynumber, $socket)
-    {
-        echo "<p>Booo!, Phone number $mynumber is disconnected!</p>";
-    }
+	/**
+	 * @param $mynumber
+	 * @param $socket
+	 */
+	public function onDisconnect($mynumber, $socket)
+	{
+		echo "<p>Booo!, Phone number $mynumber is disconnected!</p>";
+	}
 }

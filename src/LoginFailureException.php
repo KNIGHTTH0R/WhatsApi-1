@@ -1,9 +1,11 @@
 <?php
 
+namespace WhatsApi;
+
 /**
  * Class LoginFailureException
  */
-class LoginFailureException extends Exception
+class LoginFailureException extends \Exception
 {
 
 }
