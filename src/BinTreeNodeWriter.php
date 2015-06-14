@@ -181,9 +181,7 @@ class BinTreeNodeWriter
 	 */
 	protected function writeInt8($v)
 	{
-		$ret = chr($v & 0xff);
-
-		return $ret;
+		return chr($v & 0xff);
 	}
 
 	/**

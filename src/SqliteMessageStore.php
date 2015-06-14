@@ -25,8 +25,7 @@ class SqliteMessageStore implements MessageStoreInterface
 		$fileName = __DIR__ . DIRECTORY_SEPARATOR . self::DATA_FOLDER . DIRECTORY_SEPARATOR . 'msgstore-' . $number . '.db';
 		$createTable = !file_exists($fileName);
 
-		/** @noinspection UnNecessaryDoubleQuotesInspection */
-		$this->db = new \PDO("sqlite:" . $fileName, null, null,
+		$this->db = new \PDO('sqlite:' . $fileName, null, null,
 			[\PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC, \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
 		if ($createTable) {
 			$this->db->exec('CREATE TABLE messages (`from` TEXT, `to` TEXT, message TEXT, id TEXT, t TEXT)');
@@ -45,8 +44,7 @@ class SqliteMessageStore implements MessageStoreInterface
 		$sql = 'INSERT INTO messages (`from`, `to`, message, id, t) VALUES (:from, :to, :message, :messageId, :t)';
 		$query = $this->db->prepare($sql);
 
-		$query->execute(
-			[
+		$query->execute([
 				':from' => $from,
 				':to' => $to,
 				':message' => $txt,

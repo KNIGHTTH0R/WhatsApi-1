@@ -197,12 +197,12 @@ class Client
 	 *   - currency: Currency price of account.
 	 *   - price_expiration: Price expiration in UNIX TimeStamp.
 	 *
-	 * @throws Exception
+	 * @throws \InvalidArgumentException
 	 */
 	public function checkCredentials()
 	{
 		if (!$phone = $this->dissectPhone()) {
-			throw new InvalidArgumentException('The provided phone number is not valid.');
+			throw new \InvalidArgumentException('The provided phone number is not valid.');
 		}
 
 		$countryCode = ($phone['ISO3166'] != '') ? $phone['ISO3166'] : 'US';
@@ -226,31 +226,29 @@ class Client
 		$response = $this->getResponse($host, $query);
 
 		if ($response->status != 'ok') {
-			$this->eventManager()->fire("onCredentialsBad",
-				[
-					$this->phoneNumber,
-					$response->status,
-					$response->reason
-				]);
+			$this->eventManager()->fire('onCredentialsBad', [
+				$this->phoneNumber,
+				$response->status,
+				$response->reason
+			]);
 
 			$this->debugPrint($query);
 			$this->debugPrint($response);
 
-			throw new Exception('There was a problem trying to request the code.');
+			throw new \InvalidArgumentException('There was a problem trying to request the code.');
 		} else {
-			$this->eventManager()->fire("onCredentialsGood",
-				[
-					$this->phoneNumber,
-					$response->login,
-					$response->pw,
-					$response->type,
-					$response->expiration,
-					$response->kind,
-					$response->price,
-					$response->cost,
-					$response->currency,
-					$response->price_expiration
-				]);
+			$this->eventManager()->fire('onCredentialsGood', [
+				$this->phoneNumber,
+				$response->login,
+				$response->pw,
+				$response->type,
+				$response->expiration,
+				$response->kind,
+				$response->price,
+				$response->cost,
+				$response->currency,
+				$response->price_expiration
+			]);
 		}
 
 		return $response;
@@ -275,12 +273,12 @@ class Client
 	 *   - currency: Currency price of account.
 	 *   - price_expiration: Price expiration in UNIX TimeStamp.
 	 *
-	 * @throws Exception
+	 * @throws \InvalidArgumentException
 	 */
 	public function codeRegister($code)
 	{
 		if (!$phone = $this->dissectPhone()) {
-			throw new Exception('The provided phone number is not valid.');
+			throw new \InvalidArgumentException('The provided phone number is not valid.');
 		}
 
 		//$countryCode = ($phone['ISO3166'] != '') ? $phone['ISO3166'] : 'US';
@@ -302,13 +300,12 @@ class Client
 
 
 		if ($response->status != 'ok') {
-			$this->eventManager()->fire("onCodeRegisterFailed",
-				[
-					$this->phoneNumber,
-					$response->status,
-					$response->reason,
-					isset($response->retry_after) ? $response->retry_after : null
-				]);
+			$this->eventManager()->fire('onCodeRegisterFailed', [
+				$this->phoneNumber,
+				$response->status,
+				$response->reason,
+				isset($response->retry_after) ? $response->retry_after : null
+			]);
 
 			$this->debugPrint($query);
 			$this->debugPrint($response);
@@ -317,21 +314,20 @@ class Client
 				$this->update();
 			}
 
-			throw new Exception("An error occurred registering the registration code from WhatsApp. Reason: $response->reason");
+			throw new \InvalidArgumentException('An error occurred registering the registration code from WhatsApp. Reason: ' . $response->reason);
 		} else {
-			$this->eventManager()->fire("onCodeRegister",
-				[
-					$this->phoneNumber,
-					$response->login,
-					$response->pw,
-					$response->type,
-					$response->expiration,
-					$response->kind,
-					$response->price,
-					$response->cost,
-					$response->currency,
-					$response->price_expiration
-				]);
+			$this->eventManager()->fire('onCodeRegister', [
+				$this->phoneNumber,
+				$response->login,
+				$response->pw,
+				$response->type,
+				$response->expiration,
+				$response->kind,
+				$response->price,
+				$response->cost,
+				$response->currency,
+				$response->price_expiration
+			]);
 		}
 
 		return $response;
@@ -352,16 +348,16 @@ class Client
 	 *   - param: The missing_param/bad_param.
 	 *   - retry_after: Waiting time before requesting a new code.
 	 *
-	 * @throws Exception
+	 * @throws \InvalidArgumentException
 	 */
-	public function codeRequest($method = 'sms', $carrier = "T-Mobile5")
+	public function codeRequest($method = 'sms', $carrier = 'T-Mobile5')
 	{
 		if (!$phone = $this->dissectPhone()) {
-			throw new Exception('The provided phone number is not valid.');
+			throw new \InvalidArgumentException('The provided phone number is not valid.');
 		}
 
-		$countryCode = ($phone['ISO3166'] != '') ? $phone['ISO3166'] : 'US';
-		$langCode = ($phone['ISO639'] != '') ? $phone['ISO639'] : 'en';
+		$countryCode = (!empty($phone['ISO3166'])) ? $phone['ISO3166'] : 'US';
+		$langCode = (!empty($phone['ISO639'])) ? $phone['ISO639'] : 'en';
 
 		if ($carrier != null) {
 			$mnc = $this->detectMnc(strtolower($countryCode), $carrier);
@@ -391,68 +387,61 @@ class Client
 		];
 
 		$this->debugPrint($query);
-
 		$response = $this->getResponse($host, $query);
-
 		$this->debugPrint($response);
 
 		if ($response->status == 'ok') {
-			$this->eventManager()->fire("onCodeRegister",
-				[
-					$this->phoneNumber,
-					$response->login,
-					$response->pw,
-					$response->type,
-					$response->expiration,
-					$response->kind,
-					$response->price,
-					$response->cost,
-					$response->currency,
-					$response->price_expiration
-				]);
+			$this->eventManager()->fire('onCodeRegister', [
+				$this->phoneNumber,
+				$response->login,
+				$response->pw,
+				$response->type,
+				$response->expiration,
+				$response->kind,
+				$response->price,
+				$response->cost,
+				$response->currency,
+				$response->price_expiration
+			]);
 		} else {
 			if ($response->status != 'sent') {
-				if (isset($response->reason) && $response->reason == "too_recent") {
-					$this->eventManager()->fire("onCodeRequestFailedTooRecent",
-						[
+				if (isset($response->reason) && $response->reason == 'too_recent') {
+					$this->eventManager()->fire('onCodeRequestFailedTooRecent', [
+						$this->phoneNumber,
+						$method,
+						$response->reason,
+						$response->retry_after
+					]);
+					$minutes = round($response->retry_after / 60);
+					throw new \InvalidArgumentException("Code already sent. Retry after $minutes minutes.");
+
+				} else {
+					if (isset($response->reason) && $response->reason == 'too_many_guesses') {
+						$this->eventManager()->fire('onCodeRequestFailedTooManyGuesses', [
 							$this->phoneNumber,
 							$method,
 							$response->reason,
 							$response->retry_after
 						]);
-					$minutes = round($response->retry_after / 60);
-					throw new Exception("Code already sent. Retry after $minutes minutes.");
-
-				} else {
-					if (isset($response->reason) && $response->reason == "too_many_guesses") {
-						$this->eventManager()->fire("onCodeRequestFailedTooManyGuesses",
-							[
-								$this->phoneNumber,
-								$method,
-								$response->reason,
-								$response->retry_after
-							]);
 						$minutes = round($response->retry_after / 60);
-						throw new Exception("Too many guesses. Retry after $minutes minutes.");
+						throw new \InvalidArgumentException("Too many guesses. Retry after $minutes minutes.");
 
 					} else {
-						$this->eventManager()->fire("onCodeRequestFailed",
-							[
-								$this->phoneNumber,
-								$method,
-								$response->reason,
-								isset($response->param) ? $response->param : null
-							]);
-						throw new Exception('There was a problem trying to request the code.');
+						$this->eventManager()->fire('onCodeRequestFailed', [
+							$this->phoneNumber,
+							$method,
+							$response->reason,
+							isset($response->param) ? $response->param : null
+						]);
+						throw new \InvalidArgumentException('There was a problem trying to request the code.');
 					}
 				}
 			} else {
-				$this->eventManager()->fire('onCodeRequest',
-					[
-						$this->phoneNumber,
-						$method,
-						$response->length
-					]);
+				$this->eventManager()->fire('onCodeRequest', [
+					$this->phoneNumber,
+					$method,
+					$response->length
+				]);
 			}
 		}
 
@@ -465,11 +454,10 @@ class Client
 	public function update()
 	{
 		$WAData = json_decode(file_get_contents(Constants::WHATSAPP_VER_CHECKER), true);
-		$WAver = $WAData['e'];
 
-		if (Constants::WHATSAPP_VER != $WAver) {
+		if (Constants::WHATSAPP_VER != $WAData['e']) {
 			updateData('token.php', null, $WAData['h']);
-			updateData('Constants.php', $WAver);
+			updateData('Constants.php', $WAData['e']);
 		}
 	}
 
@@ -487,7 +475,7 @@ class Client
 		/* Create a TCP/IP socket. */
 		$socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 		if ($socket !== false) {
-			$result = socket_connect($socket, "e" . rand(1, 16) . ".whatsapp.net", Constants::PORT);
+			$result = socket_connect($socket, 'e' . rand(1, 16) . '.whatsapp.net', Constants::PORT);
 			if ($result === false) {
 				$socket = false;
 			}
@@ -500,8 +488,7 @@ class Client
 				['sec' => Constants::TIMEOUT_SEC, 'usec' => Constants::TIMEOUT_USEC]);
 
 			$this->socket = $socket;
-			$this->eventManager()->fire("onConnect",
-				[
+			$this->eventManager()->fire('onConnect', [
 					$this->phoneNumber,
 					$this->socket
 				]
@@ -509,8 +496,7 @@ class Client
 
 			return true;
 		} else {
-			$this->eventManager()->fire("onConnectError",
-				[
+			$this->eventManager()->fire('onConnectError', [
 					$this->phoneNumber,
 					$this->socket
 				]
@@ -540,8 +526,7 @@ class Client
 			@socket_close($this->socket);
 			$this->socket = null;
 			$this->loginStatus = Constants::DISCONNECTED_STATUS;
-			$this->eventManager()->fire("onDisconnect",
-				[
+			$this->eventManager()->fire('onDisconnect', [
 					$this->phoneNumber,
 					$this->socket
 				]
@@ -550,7 +535,7 @@ class Client
 	}
 
 	/**
-	 * @return WhatsApiEventsManager
+	 * @return events\WhatsApiEventsManager
 	 */
 	public function eventManager()
 	{
@@ -584,7 +569,7 @@ class Client
 	{
 		$this->accountInfo = (array)$this->checkCredentials();
 		if ($this->accountInfo['status'] == 'ok') {
-			$this->debugPrint("New password received: " . $this->accountInfo['pw'] . "\n");
+			$this->debugPrint('New password received: ' . $this->accountInfo['pw'] . "\n");
 			$this->password = $this->accountInfo['pw'];
 		}
 		$this->doLogin();
@@ -645,7 +630,7 @@ class Client
 	 */
 	public function sendActiveStatus()
 	{
-		$messageNode = new ProtocolNode('presence', ['type' => 'active'], null, '');
+		$messageNode = new ProtocolNode('presence', ['type' => 'active']);
 		$this->sendNode($messageNode);
 	}
 
@@ -659,18 +644,16 @@ class Client
 	{
 		$msgId = $this->createIqId();
 
-		$userNode = new ProtocolNode("user",
-			[
-				"jid" => $this->getJID($number)
-			], null, null);
-		$keyNode = new ProtocolNode("key", null, [$userNode], null);
-		$node = new ProtocolNode("iq",
-			[
-				"id" => $msgId,
-				"xmlns" => "encrypt",
-				"type" => "get",
-				"to" => Constants::WHATSAPP_SERVER
-			], [$keyNode], null);
+		$userNode = new ProtocolNode('user', [
+				'jid' => $this->getJID($number)
+			]);
+		$keyNode = new ProtocolNode('key', null, [$userNode]);
+		$node = new ProtocolNode('iq', [
+				'id' => $msgId,
+				'xmlns' => 'encrypt',
+				'type' => 'get',
+				'to' => Constants::WHATSAPP_SERVER
+			], [$keyNode]);
 
 		$this->sendNode($node);
 	}
@@ -769,10 +752,10 @@ class Client
 	 */
 	public function sendBroadcastMessage($targets, $message)
 	{
-		$bodyNode = new ProtocolNode("body", null, null, $message);
+		$bodyNode = new ProtocolNode('body', null, null, $message);
 
 		// Return message ID. Make pull request for this.
-		return $this->sendBroadcast($targets, $bodyNode, "text");
+		return $this->sendBroadcast($targets, $bodyNode, 'text');
 	}
 
 	/**
@@ -813,19 +796,18 @@ class Client
 		$listNode = [];
 		if ($lists != null && count($lists) > 0) {
 			for ($i = 0; $i < count($lists); $i++) {
-				$listNode[$i] = new ProtocolNode("list", ["id" => $lists[$i]], null, null);
+				$listNode[$i] = new ProtocolNode('list', ['id' => $lists[$i]]);
 			}
 		} else {
 			$listNode = null;
 		}
-		$deleteNode = new ProtocolNode("delete", null, $listNode, null);
-		$node = new ProtocolNode("iq",
-			[
-				"id" => $msgId,
-				"xmlns" => "w:b",
-				"type" => "set",
-				"to" => Constants::WHATSAPP_SERVER
-			], [$deleteNode], null);
+		$deleteNode = new ProtocolNode('delete', null, $listNode);
+		$node = new ProtocolNode('iq', [
+				'id' => $msgId,
+				'xmlns' => 'w:b',
+				'type' => 'set',
+				'to' => Constants::WHATSAPP_SERVER
+			], [$deleteNode]);
 
 		$this->sendNode($node);
 	}
@@ -841,16 +823,15 @@ class Client
 
 		$catnodes = [];
 		foreach ($categories as $category) {
-			$catnode = new ProtocolNode("clean", ["type" => $category], null, null);
+			$catnode = new ProtocolNode('clean', ['type' => $category]);
 			$catnodes[] = $catnode;
 		}
-		$node = new ProtocolNode("iq",
-			[
-				"id" => $msgId,
-				"type" => "set",
-				"to" => Constants::WHATSAPP_SERVER,
-				"xmlns" => "urn:xmpp:whatsapp:dirty"
-			], $catnodes, null);
+		$node = new ProtocolNode('iq', [
+				'id' => $msgId,
+				'type' => 'set',
+				'to' => Constants::WHATSAPP_SERVER,
+				'xmlns' => 'urn:xmpp:whatsapp:dirty'
+			], $catnodes);
 
 		$this->sendNode($node);
 	}
@@ -860,17 +841,16 @@ class Client
 	 */
 	public function sendClientConfig()
 	{
-		$attr = [];
-		$attr["platform"] = Constants::WHATSAPP_DEVICE;
-		$attr["version"] = Constants::WHATSAPP_VER;
-		$child = new ProtocolNode("config", $attr, null, '');
-		$node = new ProtocolNode("iq",
-			[
-				"id" => $this->createIqId(),
-				"type" => "set",
-				"xmlns" => "urn:xmpp:whatsapp:push",
-				"to" => Constants::WHATSAPP_SERVER
-			], [$child], null);
+		$child = new ProtocolNode('config', [
+			'platform' => Constants::WHATSAPP_DEVICE,
+			'version' => Constants::WHATSAPP_VER
+		]);
+		$node = new ProtocolNode('iq', [
+				'id' => $this->createIqId(),
+				'type' => 'set',
+				'xmlns' => 'urn:xmpp:whatsapp:push',
+				'to' => Constants::WHATSAPP_SERVER
+			], [$child]);
 
 		$this->sendNode($node);
 	}
@@ -881,13 +861,12 @@ class Client
 	public function sendGetClientConfig()
 	{
 		$msgId = $this->createIqId();
-		$child = new ProtocolNode("config", null, null, null);
-		$node = new ProtocolNode("iq",
-			[
-				"id" => $msgId,
-				"xmlns" => "urn:xmpp:whatsapp:push",
-				"type" => "get",
-				"to" => Constants::WHATSAPP_SERVER
+		$child = new ProtocolNode('config');
+		$node = new ProtocolNode('iq', [
+				'id' => $msgId,
+				'xmlns' => 'urn:xmpp:whatsapp:push',
+				'type' => 'get',
+				'to' => Constants::WHATSAPP_SERVER
 			], [$child], null);
 
 		$this->sendNode($node);
@@ -902,20 +881,15 @@ class Client
 	 */
 	public function sendChangeNumber($number, $identity)
 	{
-		$msgId = $this->createIqId();
-
-		$usernameNode = new ProtocolNode("username", null, null, $number);
-		$passwordNode = new ProtocolNode("password", null, null, urldecode($identity));
-
-		$modifyNode = new ProtocolNode("modify", null, [$usernameNode, $passwordNode], null);
-
-		$iqNode = new ProtocolNode("iq",
-			[
-				"xmlns" => "urn:xmpp:whatsapp:account",
-				"id" => $msgId,
-				"type" => "get",
-				"to" => "c.us"
-			], [$modifyNode], null);
+		$usernameNode = new ProtocolNode('username', null, null, $number);
+		$passwordNode = new ProtocolNode('password', null, null, urldecode($identity));
+		$modifyNode = new ProtocolNode('modify', null, [$usernameNode, $passwordNode]);
+		$iqNode = new ProtocolNode('iq', [
+				'xmlns' => 'urn:xmpp:whatsapp:account',
+				'id' => $this->createIqId(),
+				'type' => 'get',
+				'to' => 'c.us'
+			], [$modifyNode]);
 
 		$this->sendNode($iqNode);
 	}
@@ -927,7 +901,7 @@ class Client
 	 */
 	public function sendGetGroups()
 	{
-		$this->sendGetGroupsFiltered("participating");
+		$this->sendGetGroupsFiltered('participating');
 	}
 
 	/**
@@ -940,18 +914,13 @@ class Client
 	{
 		$msgId = $this->nodeId['get_groupv2_info'] = $this->createIqId();
 
-		$queryNode = new ProtocolNode("query",
-			[
-				"request" => "interactive"
-			], null, null);
-
-		$node = new ProtocolNode("iq",
-			[
-				"id" => $msgId,
-				"xmlns" => "w:g2",
-				"type" => "get",
-				"to" => $this->getJID($groupID)
-			], [$queryNode], null);
+		$queryNode = new ProtocolNode('query', ['request' => 'interactive']);
+		$node = new ProtocolNode('iq', [
+				'id' => $msgId,
+				'xmlns' => 'w:g2',
+				'type' => 'get',
+				'to' => $this->getJID($groupID)
+			], [$queryNode]);
 
 		$this->sendNode($node);
 	}
@@ -963,18 +932,14 @@ class Client
 	public function sendGetPrivacyBlockedList()
 	{
 		$msgId = $this->nodeId['privacy'] = $this->createIqId();
-		$child = new ProtocolNode("list",
-			[
-				"name" => "default"
-			], null, null);
+		$child = new ProtocolNode('list', ['name' => 'default']);
 
-		$child2 = new ProtocolNode("query", [], [$child], null);
-		$node = new ProtocolNode("iq",
-			[
-				"id" => $msgId,
-				"xmlns" => "jabber:iq:privacy",
-				"type" => "get"
-			], [$child2], null);
+		$child2 = new ProtocolNode('query', [], [$child]);
+		$node = new ProtocolNode('iq', [
+				'id' => $msgId,
+				'xmlns' => 'jabber:iq:privacy',
+				'type' => 'get'
+			], [$child2]);
 
 		$this->sendNode($node);
 		$this->waitForServer($msgId);
@@ -986,14 +951,13 @@ class Client
 	public function sendGetPrivacySettings()
 	{
 		$msgId = $this->nodeId['privacy_settings'] = $this->createIqId();
-		$privacyNode = new ProtocolNode("privacy", null, null, null);
-		$node = new ProtocolNode("iq",
-			[
-				"to" => Constants::WHATSAPP_SERVER,
-				"id" => $msgId,
-				"xmlns" => "privacy",
-				"type" => "get"
-			], [$privacyNode], null);
+		$privacyNode = new ProtocolNode('privacy');
+		$node = new ProtocolNode('iq', [
+				'to' => Constants::WHATSAPP_SERVER,
+				'id' => $msgId,
+				'xmlns' => 'privacy',
+				'type' => 'get'
+			], [$privacyNode]);
 
 		$this->sendNode($node);
 		$this->waitForServer($msgId);
@@ -1010,20 +974,15 @@ class Client
 	public function sendSetPrivacySettings($category, $value)
 	{
 		$msgId = $this->createIqId();
-		$categoryNode = new ProtocolNode("category",
-			[
-				"name" => $category,
-				"value" => $value
-			], null, null);
+		$categoryNode = new ProtocolNode('category', ['name' => $category, 'value' => $value]);
 
-		$privacyNode = new ProtocolNode("privacy", null, [$categoryNode], null);
-		$node = new ProtocolNode("iq",
-			[
-				"to" => Constants::WHATSAPP_SERVER,
-				"type" => "set",
-				"id" => $msgId,
-				"xmlns" => "privacy"
-			], [$privacyNode], null);
+		$privacyNode = new ProtocolNode('privacy', null, [$categoryNode]);
+		$node = new ProtocolNode('iq', [
+				'to' => Constants::WHATSAPP_SERVER,
+				'type' => 'set',
+				'id' => $msgId,
+				'xmlns' => 'privacy'
+			], [$privacyNode]);
 
 		$this->sendNode($node);
 		$this->waitForServer($msgId);
@@ -1042,19 +1001,18 @@ class Client
 		$msgId = $this->nodeId['getprofilepic'] = $this->createIqId();
 
 		$hash = [];
-		$hash["type"] = "image";
+		$hash['type'] = 'image';
 		if (!$large) {
-			$hash["type"] = "preview";
+			$hash['type'] = 'preview';
 		}
-		$picture = new ProtocolNode("picture", $hash, null, null);
+		$picture = new ProtocolNode('picture', $hash);
 
-		$node = new ProtocolNode("iq",
-			[
-				"id" => $msgId,
-				"type" => "get",
-				"xmlns" => "w:profile:picture",
-				"to" => $this->getJID($number)
-			], [$picture], null);
+		$node = new ProtocolNode('iq', [
+				'id' => $msgId,
+				'type' => 'get',
+				'xmlns' => 'w:profile:picture',
+				'to' => $this->getJID($number)
+			], [$picture]);
 
 		$this->sendNode($node);
 		$this->waitForServer($msgId);
@@ -1073,25 +1031,21 @@ class Client
 		$msgId = $this->createIqId();
 
 		$userNode = [];
-		for ($i = 0; $i < count($numbers); $i++) {
-			$userNode[$i] = new ProtocolNode("user",
-				[
-					"jid" => $this->getJID($numbers[$i])
-				], null, null);
+		$c = count($numbers);
+		for ($i = 0; $i < $c; $i++) {
+			$userNode[] = new ProtocolNode('user', ['jid' => $this->getJID($numbers[$i])]);
 		}
 
-		if (!sizeof($userNode)) {
+		if (!count($userNode)) {
 			return false;
 		}
 
-		$listNode = new ProtocolNode("list", null, $userNode, null);
-
-		$iqNode = new ProtocolNode("iq",
-			[
-				"id" => $msgId,
-				"xmlns" => "w:profile:picture",
-				"type" => "get"
-			], [$listNode], null);
+		$listNode = new ProtocolNode('list', null, $userNode);
+		$iqNode = new ProtocolNode('iq', [
+				'id' => $msgId,
+				'xmlns' => 'w:profile:picture',
+				'type' => 'get'
+			], [$listNode]);
 
 		$this->sendNode($iqNode);
 		$this->waitForServer($msgId);
@@ -1108,15 +1062,14 @@ class Client
 	{
 		$msgId = $this->nodeId['getlastseen'] = $this->createIqId();
 
-		$queryNode = new ProtocolNode("query", null, null, null);
+		$queryNode = new ProtocolNode('query');
 
-		$messageNode = new ProtocolNode("iq",
-			[
-				"to" => $this->getJID($to),
-				"type" => "get",
-				"id" => $msgId,
-				"xmlns" => "jabber:iq:last"
-			], [$queryNode], '');
+		$messageNode = new ProtocolNode('iq', [
+				'to' => $this->getJID($to),
+				'type' => 'get',
+				'id' => $msgId,
+				'xmlns' => 'jabber:iq:last'
+			], [$queryNode]);
 
 		$this->sendNode($messageNode);
 		$this->waitForServer($msgId);
@@ -1128,14 +1081,13 @@ class Client
 	public function sendGetServerProperties()
 	{
 		$id = $this->createIqId();
-		$child = new ProtocolNode("props", null, null, null);
-		$node = new ProtocolNode("iq",
-			[
-				"id" => $id,
-				"type" => "get",
-				"xmlns" => "w",
-				"to" => Constants::WHATSAPP_SERVER
-			], [$child], null);
+		$child = new ProtocolNode('props');
+		$node = new ProtocolNode('iq', [
+				'id' => $id,
+				'type' => 'get',
+				'xmlns' => 'w',
+				'to' => Constants::WHATSAPP_SERVER
+			], [$child]);
 
 		$this->sendNode($node);
 	}
@@ -1152,18 +1104,16 @@ class Client
 	{
 
 		$msgId = $this->createIqId();
-		$pricingNode = new ProtocolNode("pricing",
-			[
-				"lg" => $lg,
-				"lc" => $lc
-			], null, null);
-		$node = new ProtocolNode("iq",
-			[
-				"id" => $msgId,
-				"xmlns" => "urn:xmpp:whatsapp:account",
-				"type" => "get",
-				"to" => Constants::WHATSAPP_SERVER
-			], [$pricingNode], null);
+		$pricingNode = new ProtocolNode('pricing', [
+				'lg' => $lg,
+				'lc' => $lc
+			]);
+		$node = new ProtocolNode('iq', [
+				'id' => $msgId,
+				'xmlns' => 'urn:xmpp:whatsapp:account',
+				'type' => 'get',
+				'to' => Constants::WHATSAPP_SERVER
+			], [$pricingNode]);
 
 		$this->sendNode($node);
 	}
@@ -1175,14 +1125,13 @@ class Client
 	{
 
 		$msgId = $this->createIqId();
-		$extendingNode = new ProtocolNode("extend", null, null, null);
-		$node = new ProtocolNode("iq",
-			[
-				"id" => $msgId,
-				"xmlns" => "urn:xmpp:whatsapp:account",
-				"type" => "set",
-				"to" => Constants::WHATSAPP_SERVER
-			], [$extendingNode], null);
+		$extendingNode = new ProtocolNode("extend");
+		$node = new ProtocolNode('iq', [
+				'id' => $msgId,
+				'xmlns' => 'urn:xmpp:whatsapp:account',
+				'type' => 'set',
+				'to' => Constants::WHATSAPP_SERVER
+			], [$extendingNode]);
 
 		$this->sendNode($node);
 	}
@@ -1193,14 +1142,13 @@ class Client
 	public function sendGetBroadcastLists()
 	{
 		$msgId = $this->nodeId['get_lists'] = $this->createIqId();
-		$listsNode = new ProtocolNode("lists", null, null, null);
-		$node = new ProtocolNode("iq",
-			[
-				"id" => $msgId,
-				"xmlns" => "w:b",
-				"type" => "get",
-				"to" => Constants::WHATSAPP_SERVER
-			], [$listsNode], null);
+		$listsNode = new ProtocolNode('lists');
+		$node = new ProtocolNode('iq', [
+				'id' => $msgId,
+				'xmlns' => 'w:b',
+				'type' => 'get',
+				'to' => Constants::WHATSAPP_SERVER
+			], [$listsNode]);
 
 		$this->sendNode($node);
 	}
@@ -1214,16 +1162,15 @@ class Client
 	public function sendGetNormalizedJid($countryCode, $number)
 	{
 		$msgId = $this->createIqId();
-		$ccNode = new ProtocolNode("cc", null, null, $countryCode);
-		$inNode = new ProtocolNode("in", null, null, $number);
-		$normalizeNode = new ProtocolNode("normalize", null, [$ccNode, $inNode], null);
-		$node = new ProtocolNode("iq",
-			[
-				"id" => $msgId,
-				"xmlns" => "urn:xmpp:whatsapp:account",
-				"type" => "get",
-				"to" => Constants::WHATSAPP_SERVER
-			], [$normalizeNode], null);
+		$ccNode = new ProtocolNode('cc', null, null, $countryCode);
+		$inNode = new ProtocolNode('in', null, null, $number);
+		$normalizeNode = new ProtocolNode('normalize', null, [$ccNode, $inNode]);
+		$node = new ProtocolNode('iq', [
+				'id' => $msgId,
+				'xmlns' => 'urn:xmpp:whatsapp:account',
+				'type' => 'get',
+				'to' => Constants::WHATSAPP_SERVER
+			], [$normalizeNode]);
 
 		$this->sendNode($node);
 	}
@@ -1237,7 +1184,6 @@ class Client
 	 */
 	public function sendRemoveAccount($lg = null, $lc = null, $feedback = null)
 	{
-		$msgId = $this->createIqId();
 		if ($feedback != null && strlen($feedback) > 0) {
 			if ($lg == null) {
 				$lg = '';
@@ -1247,24 +1193,22 @@ class Client
 				$lc = '';
 			}
 
-			$child = new ProtocolNode("body",
-				[
-					"lg" => $lg,
-					"lc" => $lc
+			$child = new ProtocolNode('body', [
+					'lg' => $lg,
+					'lc' => $lc
 				], null, $feedback);
 			$childNode = [$child];
 		} else {
 			$childNode = null;
 		}
 
-		$removeNode = new ProtocolNode("remove", null, $childNode, null);
-		$node = new ProtocolNode("iq",
-			[
-				"to" => Constants::WHATSAPP_SERVER,
-				"xmlns" => "urn:xmpp:whatsapp:account",
-				"type" => "get",
-				"id" => $msgId
-			], [$removeNode], null);
+		$removeNode = new ProtocolNode('remove', null, $childNode);
+		$node = new ProtocolNode('iq', [
+				'to' => Constants::WHATSAPP_SERVER,
+				'xmlns' => 'urn:xmpp:whatsapp:account',
+				'type' => 'get',
+				'id' => $this->createIqId()
+			], [$removeNode]);
 
 		$this->sendNode($node);
 	}
@@ -1274,15 +1218,13 @@ class Client
 	 */
 	public function sendPing()
 	{
-		$msgId = $this->createIqId();
-		$pingNode = new ProtocolNode("ping", null, null, null);
-		$node = new ProtocolNode("iq",
-			[
-				"id" => $msgId,
-				"xmlns" => "w:p",
-				"type" => "get",
-				"to" => Constants::WHATSAPP_SERVER
-			], [$pingNode], null);
+		$pingNode = new ProtocolNode('ping');
+		$node = new ProtocolNode('iq', [
+				'id' => $this->createIqId(),
+				'xmlns' => 'w:p',
+				'type' => 'get',
+				'to' => Constants::WHATSAPP_SERVER
+			], [$pingNode]);
 
 		$this->sendNode($node);
 	}
@@ -1294,25 +1236,21 @@ class Client
 	 */
 	public function sendGetHasVoipEnabled($jids)
 	{
-
-		$msgId = $this->createIqId();
-
 		if (!is_array($jids)) {
 			$jids = [$jids];
 		}
 		$userNode = [];
 		foreach ($jids as $jid) {
-			$userNode[] = new ProtocolNode("user", ['jid' => $this->getJID($jid)], null, null);
+			$userNode[] = new ProtocolNode('user', ['jid' => $this->getJID($jid)]);
 		}
 
-		$eligibleNode = new ProtocolNode("eligible", null, $userNode, null);
-		$node = new ProtocolNode("iq",
-			[
-				"id" => $msgId,
-				"xmlns" => "voip",
-				"type" => "get",
-				"to" => Constants::WHATSAPP_SERVER
-			], [$eligibleNode], null);
+		$eligibleNode = new ProtocolNode('eligible', null, $userNode);
+		$node = new ProtocolNode('iq', [
+				'id' => $this->createIqId(),
+				'xmlns' => 'voip',
+				'type' => 'get',
+				'to' => Constants::WHATSAPP_SERVER
+			], [$eligibleNode]);
 
 		$this->sendNode($node);
 	}
@@ -1330,20 +1268,17 @@ class Client
 
 		$children = [];
 		foreach ($jids as $jid) {
-			$children[] = new ProtocolNode("user", ["jid" => $this->getJID($jid)], null, null);
+			$children[] = new ProtocolNode('user', ['jid' => $this->getJID($jid)]);
 		}
 
 		$iqId = $this->nodeId['getstatuses'] = $this->createIqId();
 
-		$node = new ProtocolNode("iq",
-			[
-				"to" => Constants::WHATSAPP_SERVER,
-				"type" => "get",
-				"xmlns" => "status",
-				"id" => $iqId
-			], [
-				new ProtocolNode("status", null, $children, null)
-			], null);
+		$node = new ProtocolNode('iq', [
+				'to' => Constants::WHATSAPP_SERVER,
+				'type' => 'get',
+				'xmlns' => 'status',
+				'id' => $iqId
+			], [new ProtocolNode('status', null, $children)]);
 
 		$this->sendNode($node);
 		$this->waitForServer($iqId);
@@ -1380,12 +1315,12 @@ class Client
 				"subject" => $subject
 			], $participantNode, null);
 
-		$iqNode = new ProtocolNode("iq",
+		$iqNode = new ProtocolNode('iq',
 			[
-				"xmlns" => "w:g2",
-				"id" => $id,
-				"type" => "set",
-				"to" => Constants::WHATSAPP_GROUP_SERVER
+				'xmlns' => "w:g2",
+				'id' => $id,
+				'type' => 'set',
+				'to' => Constants::WHATSAPP_GROUP_SERVER
 			], [$createNode], null);
 
 		$this->sendNode($iqNode);
@@ -1410,12 +1345,12 @@ class Client
 	public function sendSetGroupSubject($gjid, $subject)
 	{
 		$child = new ProtocolNode("subject", null, null, $subject);
-		$node = new ProtocolNode("iq",
+		$node = new ProtocolNode('iq',
 			[
-				"id" => $this->createIqId(),
-				"type" => "set",
-				"to" => $this->getJID($gjid),
-				"xmlns" => "w:g2"
+				'id' => $this->createIqId(),
+				'type' => 'set',
+				'to' => $this->getJID($gjid),
+				'xmlns' => "w:g2"
 			], [$child], null);
 
 		$this->sendNode($node);
@@ -1438,7 +1373,7 @@ class Client
 		foreach ($gjids as $gjid) {
 			$nodes[] = new ProtocolNode("group",
 				[
-					"id" => $this->getJID($gjid)
+					'id' => $this->getJID($gjid)
 				], null, null);
 		}
 
@@ -1447,12 +1382,12 @@ class Client
 				'action' => 'delete'
 			], $nodes, null);
 
-		$node = new ProtocolNode("iq",
+		$node = new ProtocolNode('iq',
 			[
-				"id" => $msgId,
-				"to" => Constants::WHATSAPP_GROUP_SERVER,
-				"type" => "set",
-				"xmlns" => "w:g2"
+				'id' => $msgId,
+				'to' => Constants::WHATSAPP_GROUP_SERVER,
+				'type' => 'set',
+				'xmlns' => "w:g2"
 			], [$leave], null);
 
 		$this->sendNode($node);
@@ -1592,9 +1527,9 @@ class Client
 	{
 		$messageNode = new ProtocolNode("receipt",
 			[
-				"type" => "read",
-				"to" => $to,
-				"id" => $id
+				'type' => "read",
+				'to' => $to,
+				'id' => $id
 			], null, null);
 
 		$this->sendNode($messageNode);
@@ -1677,7 +1612,7 @@ class Client
 	{
 		$mediaNode = new ProtocolNode("media",
 			[
-				"type" => "location",
+				'type' => "location",
 				"encoding" => "raw",
 				"latitude" => $lat,
 				"longitude" => $long,
@@ -1712,7 +1647,7 @@ class Client
 	{
 		$node = new ProtocolNode("chatstate",
 			[
-				"to" => $this->getJID($to)
+				'to' => $this->getJID($to)
 			], [new ProtocolNode($state, null, null, null)], null);
 
 		$this->sendNode($node);
@@ -1763,7 +1698,7 @@ class Client
 	 */
 	public function sendOfflineStatus()
 	{
-		$messageNode = new ProtocolNode("presence", ["type" => "inactive"], null, '');
+		$messageNode = new ProtocolNode("presence", ['type' => "inactive"], null, '');
 		$this->sendNode($messageNode);
 	}
 
@@ -1774,11 +1709,11 @@ class Client
 	 */
 	public function sendPong($msgid)
 	{
-		$messageNode = new ProtocolNode("iq",
+		$messageNode = new ProtocolNode('iq',
 			[
-				"to" => Constants::WHATSAPP_SERVER,
-				"id" => $msgid,
-				"type" => "result"
+				'to' => Constants::WHATSAPP_SERVER,
+				'id' => $msgid,
+				'type' => "result"
 			], null, '');
 
 		$this->sendNode($messageNode);
@@ -1814,7 +1749,7 @@ class Client
 	{
 		$node = new ProtocolNode("presence",
 			[
-				"type" => $type
+				'type' => $type
 			], null, '');
 
 		$this->sendNode($node);
@@ -1833,7 +1768,7 @@ class Client
 	 */
 	public function sendPresenceSubscription($to)
 	{
-		$node = new ProtocolNode("presence", ["type" => "subscribe", "to" => $this->getJID($to)], null, '');
+		$node = new ProtocolNode("presence", ['type' => "subscribe", 'to' => $this->getJID($to)], null, '');
 		$this->sendNode($node);
 	}
 
@@ -1844,7 +1779,7 @@ class Client
 	 */
 	public function sendPresenceUnsubscription($to)
 	{
-		$node = new ProtocolNode("presence", ["type" => "unsubscribe", "to" => $this->getJID($to)], null, '');
+		$node = new ProtocolNode("presence", ['type' => "unsubscribe", 'to' => $this->getJID($to)], null, '');
 		$this->sendNode($node);
 	}
 
@@ -1874,7 +1809,7 @@ class Client
 		foreach ($blockedJids as $index => $jid) {
 			$item = new ProtocolNode("item",
 				[
-					"type" => "jid",
+					'type' => "jid",
 					"value" => $this->getJID($jid),
 					"action" => "deny",
 					"order" => $index + 1//WhatsApp stream crashes on zero index
@@ -1888,11 +1823,11 @@ class Client
 			], $items, null);
 
 		$child2 = new ProtocolNode("query", null, [$child], null);
-		$node = new ProtocolNode("iq",
+		$node = new ProtocolNode('iq',
 			[
-				"id" => $this->createIqId(),
-				"xmlns" => "jabber:iq:privacy",
-				"type" => "set"
+				'id' => $this->createIqId(),
+				'xmlns' => "jabber:iq:privacy",
+				'type' => 'set'
 			], [$child2], null);
 
 		$this->sendNode($node);
@@ -1922,15 +1857,15 @@ class Client
 
 		$thumb = new ProtocolNode("picture",
 			[
-				"type" => "preview"
+				'type' => "preview"
 			], null, null);
 
-		$node = new ProtocolNode("iq",
+		$node = new ProtocolNode('iq',
 			[
-				"id" => $msgId,
-				"to" => $this->getJID($this->phoneNumber),
-				"type" => "set",
-				"xmlns" => "w:profile:picture"
+				'id' => $msgId,
+				'to' => $this->getJID($this->phoneNumber),
+				'type' => 'set',
+				'xmlns' => "w:profile:picture"
 			], [$picture, $thumb], null);
 
 		$this->sendNode($node);
@@ -1945,14 +1880,14 @@ class Client
 	{
 		$child = new ProtocolNode("pin",
 			[
-				"xmlns" => "w:ch:p"
+				'xmlns' => "w:ch:p"
 			], null, $token);
 
-		$node = new ProtocolNode("iq",
+		$node = new ProtocolNode('iq',
 			[
-				"id" => $this->createIqId(),
-				"type" => "set",
-				"to" => Constants::WHATSAPP_SERVER
+				'id' => $this->createIqId(),
+				'type' => 'set',
+				'to' => Constants::WHATSAPP_SERVER
 			], [$child], null);
 
 		$this->sendNode($node);
@@ -1966,12 +1901,12 @@ class Client
 	public function sendStatusUpdate($txt)
 	{
 		$child = new ProtocolNode("status", null, null, $txt);
-		$node = new ProtocolNode("iq",
+		$node = new ProtocolNode('iq',
 			[
-				"to" => Constants::WHATSAPP_SERVER,
-				"type" => "set",
-				"id" => $this->createIqId(),
-				"xmlns" => "status"
+				'to' => Constants::WHATSAPP_SERVER,
+				'type' => 'set',
+				'id' => $this->createIqId(),
+				'xmlns' => "status"
 			], [$child], null);
 
 		$this->sendNode($node);
@@ -1999,7 +1934,7 @@ class Client
 
 		$mediaNode = new ProtocolNode("media",
 			[
-				"type" => "vcard"
+				'type' => "vcard"
 			], [$vCardNode], '');
 
 		// Return message ID. Make pull request for this.
@@ -2023,7 +1958,7 @@ class Client
 
 		$mediaNode = new ProtocolNode("media",
 			[
-				"type" => "vcard"
+				'type' => "vcard"
 			], [$vCardNode], '');
 
 		// Return message ID. Make pull request for this.
@@ -2047,8 +1982,8 @@ class Client
 
 		$callNode = new ProtocolNode("call",
 			[
-				"id" => $id,
-				"to" => $this->getJID($to)
+				'id' => $id,
+				'to' => $this->getJID($to)
 			], [$rejectNode], null);
 
 		$this->sendNode($callNode);
@@ -2413,7 +2348,7 @@ class Client
 
 		if ($deletedNumbers != null || count($deletedNumbers)) {
 			for ($j = 0; $j < count($deletedNumbers); $j++, $i++) {
-				$users[$i] = new ProtocolNode("user", ["jid" => $this->getJID($deletedNumbers[$j]), "type" => "delete"],
+				$users[$i] = new ProtocolNode("user", ["jid" => $this->getJID($deletedNumbers[$j]), 'type' => "delete"],
 					null, null);
 			}
 		}
@@ -2462,11 +2397,11 @@ class Client
 
 		$id = $this->createIqId();
 
-		$node = new ProtocolNode("iq",
+		$node = new ProtocolNode('iq',
 			[
-				"id" => $id,
-				"xmlns" => "urn:xmpp:whatsapp:sync",
-				"type" => "get"
+				'id' => $id,
+				'xmlns' => "urn:xmpp:whatsapp:sync",
+				'type' => 'get'
 			], [
 				new ProtocolNode("sync",
 					[
@@ -2717,7 +2652,7 @@ class Client
 			if ($this->newMsgBind && ($node->getChild('body') || $node->getChild('media'))) {
 				$this->newMsgBind->process($node);
 			}
-			if ($node->getAttribute("type") == "text" && $node->getChild('body') != null) {
+			if ($node->getAttribute('type') == "text" && $node->getChild('body') != null) {
 				$author = $node->getAttribute("participant");
 				if ($autoReceipt) {
 					$this->sendReceipt($node, $type, $author);
@@ -2759,13 +2694,13 @@ class Client
 				}
 
 			}
-			if ($node->getAttribute("type") == "text" && $node->getChild(0)->getTag() == 'enc') {
+			if ($node->getAttribute('type') == "text" && $node->getChild(0)->getTag() == 'enc') {
 				// TODO
 				if ($autoReceipt) {
 					$this->sendReceipt($node, $type);
 				}
 			}
-			if ($node->getAttribute("type") == "media" && $node->getChild('media') != null) {
+			if ($node->getAttribute('type') == "media" && $node->getChild('media') != null) {
 				if ($node->getChild("media")->getAttribute('type') == 'image') {
 
 					if ($node->getAttribute("participant") == null) {
@@ -3008,8 +2943,8 @@ class Client
 					]);
 			}
 		}
-		if ($node->getTag() == "iq"
-			&& $node->getAttribute('type') == "get"
+		if ($node->getTag() == 'iq'
+			&& $node->getAttribute('type') == 'get'
 			&& $node->getAttribute('xmlns') == "urn:xmpp:ping"
 		) {
 			$this->eventManager()->fire("onPing",
@@ -3019,7 +2954,7 @@ class Client
 				]);
 			$this->sendPong($node->getAttribute('id'));
 		}
-		if ($node->getTag() == "iq"
+		if ($node->getTag() == 'iq'
 			&& $node->getChild("sync") != null
 		) {
 
@@ -3062,7 +2997,7 @@ class Client
 					$node->getAttribute('retry')
 				]);
 		}
-		if ($node->getTag() == "iq"
+		if ($node->getTag() == 'iq'
 			&& $node->getAttribute('type') == "result"
 		) {
 			if ($node->getChild("query") != null) {
@@ -3105,7 +3040,7 @@ class Client
 					[
 						$this->phoneNumber,
 						$node->getAttribute("from"),
-						$node->getChild("picture")->getAttribute("type"),
+						$node->getChild("picture")->getAttribute('type'),
 						$node->getChild("picture")->getData()
 					]);
 			}
@@ -3167,7 +3102,7 @@ class Client
 					foreach ($childArray as $list) {
 						if ($list->getChildren() != null) {
 							foreach ($list->getChildren() as $sublist) {
-								$id = $sublist->getAttribute("id");
+								$id = $sublist->getAttribute('id');
 								$name = $sublist->getAttribute("name");
 								$broadcastLists[$id]['name'] = $name;
 								$recipients = [];
@@ -3220,14 +3155,14 @@ class Client
 							$this->phoneNumber,
 							$status->getAttribute("jid"),
 							"requested",
-							$node->getAttribute("id"),
+							$node->getAttribute('id'),
 							$status->getAttribute("t"),
 							$status->getData()
 						]);
 				}
 			}
 		}
-		if ($node->getTag() == "iq" && $node->getAttribute('type') == "error") {
+		if ($node->getTag() == 'iq' && $node->getAttribute('type') == "error") {
 			$errorType = null;
 			foreach ($this->nodeId AS $type => $nodeID) {
 				if ($nodeID == $node->getAttribute('id')) {
@@ -3253,12 +3188,12 @@ class Client
 					"url" => $node->getChild(0)->getAttribute('url')
 				], null, null);
 
-			$iqNode = new ProtocolNode("iq",
+			$iqNode = new ProtocolNode('iq',
 				[
-					"id" => $msgId,
-					"xmlns" => "w:m",
-					"type" => "set",
-					"to" => Constants::WHATSAPP_SERVER
+					'id' => $msgId,
+					'xmlns' => "w:m",
+					'type' => 'set',
+					'to' => Constants::WHATSAPP_SERVER
 				], [$ackNode], null);
 
 			$this->sendNode($iqNode);
@@ -3281,7 +3216,7 @@ class Client
 
 		if ($node->getTag() == "notification") {
 			$name = $node->getAttribute("notify");
-			$type = $node->getAttribute("type");
+			$type = $node->getAttribute('type');
 			switch ($type) {
 				case "status":
 					$this->eventManager()->fire("onGetStatus",
@@ -3289,7 +3224,7 @@ class Client
 							$this->phoneNumber, //my number
 							$node->getAttribute("from"),
 							$node->getChild(0)->getTag(),
-							$node->getAttribute("id"),
+							$node->getAttribute('id'),
 							$node->getAttribute("t"),
 							$node->getChild(0)->getData()
 						]);
@@ -3471,7 +3406,7 @@ class Client
 					[
 						$this->phoneNumber,
 						$node->getAttribute("from"),
-						$node->getAttribute("id"),
+						$node->getAttribute('id'),
 						$node->getAttribute("notify"),
 						$node->getAttribute("t"),
 						$node->getChild(0)->getAttribute("call-id")
@@ -3485,7 +3420,7 @@ class Client
 			foreach ($node->getChildren() as $child) {
 				switch ($child->getTag()) {
 					case "dirty":
-						$this->sendClearDirty([$child->getAttribute("type")]);
+						$this->sendClearDirty([$child->getAttribute('type')]);
 						break;
 					case "account":
 						$this->eventManager()->fire("onPaymentRecieved",
@@ -3519,10 +3454,10 @@ class Client
 	protected function sendAck($node, $class)
 	{
 		$from = $node->getAttribute("from");
-		$to = $node->getAttribute("to");
+		$to = $node->getAttribute('to');
 		$participant = $node->getAttribute("participant");
-		$id = $node->getAttribute("id");
-		$type = $node->getAttribute("type");
+		$id = $node->getAttribute('id');
+		$type = $node->getAttribute('type');
 
 		$attributes = [];
 		if ($to) {
@@ -3531,11 +3466,11 @@ class Client
 		if ($participant) {
 			$attributes["participant"] = $participant;
 		}
-		$attributes["to"] = $from;
+		$attributes['to'] = $from;
 		$attributes["class"] = $class;
-		$attributes["id"] = $id;
+		$attributes['id'] = $id;
 		if ($type != null) {
-			$attributes["type"] = $type;
+			$attributes['type'] = $type;
 		}
 
 		$ack = new ProtocolNode("ack", $attributes, null, null);
@@ -3575,7 +3510,7 @@ class Client
 		$pictureNode = $node->getChild("picture");
 
 		if ($pictureNode != null) {
-			if ($pictureNode->getAttribute("type") == "preview") {
+			if ($pictureNode->getAttribute('type') == "preview") {
 				$filename = __DIR__ . DIRECTORY_SEPARATOR . Constants::DATA_FOLDER . DIRECTORY_SEPARATOR . Constants::PICTURES_FOLDER . DIRECTORY_SEPARATOR . 'preview_' . $node->getAttribute('from') . 'jpg';
 			} else {
 				$filename = __DIR__ . DIRECTORY_SEPARATOR . Constants::DATA_FOLDER . DIRECTORY_SEPARATOR . Constants::PICTURES_FOLDER . DIRECTORY_SEPARATOR . $node->getAttribute('from') . '.jpg';
@@ -3615,7 +3550,7 @@ class Client
 	 */
 	protected function processUploadResponse($node)
 	{
-		$id = $node->getAttribute("id");
+		$id = $node->getAttribute('id');
 		$messageNode = @$this->mediaQueue[$id];
 		if ($messageNode == null) {
 			//message not found, can't send!
@@ -3638,7 +3573,7 @@ class Client
 			$filesize = $duplicate->getAttribute("size");
 //          $mimetype = $duplicate->getAttribute("mimetype");
 			$filehash = $duplicate->getAttribute("filehash");
-			$filetype = $duplicate->getAttribute("type");
+			$filetype = $duplicate->getAttribute('type');
 //          $width = $duplicate->getAttribute("width");
 //          $height = $duplicate->getAttribute("height");
 			$exploded = explode("/", $url);
@@ -3672,7 +3607,7 @@ class Client
 		}
 
 		$mediaAttribs = [];
-		$mediaAttribs["type"] = $filetype;
+		$mediaAttribs['type'] = $filetype;
 		$mediaAttribs["url"] = $url;
 		$mediaAttribs["encoding"] = "raw";
 		$mediaAttribs["file"] = $filename;
@@ -3847,7 +3782,7 @@ class Client
 		foreach ($targets as $target) {
 			$jid = $this->getJID($target);
 			$hash = ["jid" => $jid];
-			$toNode = new ProtocolNode("to", $hash, null, null);
+			$toNode = new ProtocolNode('to', $hash, null, null);
 			$toNodes[] = $toNode;
 		}
 
@@ -3857,9 +3792,9 @@ class Client
 
 		$messageNode = new ProtocolNode("message",
 			[
-				"to" => time() . "@broadcast",
-				"type" => $type,
-				"id" => $msgId
+				'to' => time() . "@broadcast",
+				'type' => $type,
+				'id' => $msgId
 			], [$node, $broadcastNode], null);
 
 		$this->sendNode($messageNode);
@@ -3900,12 +3835,12 @@ class Client
 	{
 		$msgID = $this->nodeId['getgroups'] = $this->createIqId();
 		$child = new ProtocolNode($type, null, null, null);
-		$node = new ProtocolNode("iq",
+		$node = new ProtocolNode('iq',
 			[
-				"id" => $msgID,
-				"type" => "get",
-				"xmlns" => "w:g2",
-				"to" => Constants::WHATSAPP_GROUP_SERVER
+				'id' => $msgID,
+				'type' => 'get',
+				'xmlns' => "w:g2",
+				'to' => Constants::WHATSAPP_GROUP_SERVER
 			], [$child], null);
 
 		$this->sendNode($node);
@@ -4084,10 +4019,10 @@ class Client
 		$data = preprocessProfilePicture($filepath);
 		$preview = createIconGD($filepath, 96, true);
 
-		$picture = new ProtocolNode("picture", ["type" => "image"], null, $data);
-		$preview = new ProtocolNode("picture", ["type" => "preview"], null, $preview);
+		$picture = new ProtocolNode("picture", ['type' => "image"], null, $data);
+		$preview = new ProtocolNode("picture", ['type' => "preview"], null, $preview);
 
-		$node = new ProtocolNode("iq", [
+		$node = new ProtocolNode('iq', [
 			'id' => $nodeID,
 			'to' => $this->getJID($jid),
 			'type' => 'set',

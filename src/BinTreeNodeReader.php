@@ -11,7 +11,9 @@ class BinTreeNodeReader
 	 * @var
 	 */
 	private $input;
-	/** @var $key KeyStream */
+	/**
+	 * @var KeyStream
+	 */
 	private $key;
 
 	/**
@@ -33,7 +35,7 @@ class BinTreeNodeReader
 	/**
 	 * @param null $input
 	 * @return null|ProtocolNode
-	 * @throws Exception
+	 * @throws \InvalidArgumentException
 	 */
 	public function nextTree($input = null)
 	{
@@ -44,7 +46,7 @@ class BinTreeNodeReader
 		$stanzaFlag = ($firstByte & 0xF0) >> 4;
 		$stanzaSize = $this->peekInt16(1) | (($firstByte & 0x0F) << 16);
 		if ($stanzaSize > strlen($this->input)) {
-			throw new LengthException('Incomplete message $stanzaSize != ' . strlen($this->input));
+			throw new \LengthException('Incomplete message $stanzaSize != ' . strlen($this->input));
 		}
 		$this->readInt24();
 		if ($stanzaFlag & 8) {
@@ -52,7 +54,7 @@ class BinTreeNodeReader
 				$realSize = $stanzaSize - 4;
 				$this->input = $this->key->DecodeMessage($this->input, $realSize, 0, $realSize);// . $remainingData;
 			} else {
-				throw new InvalidArgumentException('Encountered encrypted message, missing key');
+				throw new \InvalidArgumentException('Encountered encrypted message, missing key');
 			}
 		}
 		if ($stanzaSize > 0) {
@@ -64,7 +66,6 @@ class BinTreeNodeReader
 
 	/**
 	 * @return string
-	 * @throws Exception
 	 */
 	protected function readNibble()
 	{
@@ -102,7 +103,7 @@ class BinTreeNodeReader
 					$string .= chr($decimal - 10 + 45);
 					break;
 				default:
-					throw new InvalidArgumentException('Bad nibble: ' . $decimal);
+					throw new \InvalidArgumentException('Bad nibble: ' . $decimal);
 			}
 		}
 
@@ -112,7 +113,7 @@ class BinTreeNodeReader
 	/**
 	 * @param $token
 	 * @return string
-	 * @throws Exception
+	 * @throws InvalidArgumentException
 	 */
 	protected function getToken($token)
 	{
@@ -123,7 +124,7 @@ class BinTreeNodeReader
 			$token = $this->readInt8();
 			TokenMap::GetToken($token, $subdict, $ret);
 			if (!$ret) {
-				throw new InvalidArgumentException('BinTreeNodeReader->getToken: Invalid token ' . $token);
+				throw new \InvalidArgumentException('BinTreeNodeReader->getToken: Invalid token ' . $token);
 			}
 		}
 
@@ -133,14 +134,13 @@ class BinTreeNodeReader
 	/**
 	 * @param $token
 	 * @return string
-	 * @throws Exception
 	 */
 	protected function readString($token)
 	{
 		$ret = '';
 
 		if ($token == -1) {
-			throw new Exception("BinTreeNodeReader->readString: Invalid token $token");
+			throw new \InvalidArgumentException('BinTreeNodeReader->readString: Invalid token ' . $token);
 		}
 
 		if (($token > 2) && ($token < 0xf5)) {
@@ -171,7 +171,6 @@ class BinTreeNodeReader
 	/**
 	 * @param $size
 	 * @return array
-	 * @throws Exception
 	 */
 	protected function readAttributes($size)
 	{
@@ -189,7 +188,7 @@ class BinTreeNodeReader
 
 	/**
 	 * @return null|ProtocolNode
-	 * @throws Exception
+	 * @throws \InvalidArgumentException
 	 */
 	protected function nextTreeInternal()
 	{
@@ -228,7 +227,6 @@ class BinTreeNodeReader
 	/**
 	 * @param $token
 	 * @return array
-	 * @throws Exception
 	 */
 	protected function readList($token)
 	{
@@ -244,7 +242,6 @@ class BinTreeNodeReader
 	/**
 	 * @param $token
 	 * @return int
-	 * @throws Exception
 	 */
 	protected function readListSize($token)
 	{
@@ -254,7 +251,7 @@ class BinTreeNodeReader
 			return $this->readInt16();
 		}
 
-		throw new InvalidArgumentException('BinTreeNodeReader->readListSize: Invalid token ' . $token);
+		throw new \InvalidArgumentException('BinTreeNodeReader->readListSize: Invalid token ' . $token);
 	}
 
 	/**
