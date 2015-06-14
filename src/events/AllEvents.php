@@ -35,7 +35,6 @@ abstract class AllEvents
 	public function setEventsToListenFor(array $eventList)
 	{
 		$this->eventsToListenFor = $eventList;
-
 		return $this->startListening();
 	}
 
@@ -635,24 +634,8 @@ abstract class AllEvents
 	 * @param $preview
 	 * @param $caption
 	 */
-	public function onGetVideo(
-		$mynumber,
-		$from,
-		$id,
-		$type,
-		$time,
-		$name,
-		$url,
-		$file,
-		$size,
-		$mimeType,
-		$fileHash,
-		$duration,
-		$vcodec,
-		$acodec,
-		$preview,
-		$caption
-	) {
+	public function onGetVideo($mynumber, $from, $id, $type, $time, $name, $url, $file, $size, $mimeType, $fileHash, $duration, $vcodec, $acodec, $preview, $caption)
+	{
 	}
 
 	/**

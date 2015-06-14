@@ -291,6 +291,11 @@ function getExtensionFromMime($mime)
 	return $extensions[$mime];
 }
 
+/**
+ * @param $country
+ * @param $phone
+ * @return string
+ */
 function generateRequestToken($country, $phone)
 {
 	$const = 'PdA2DJyKoUrwLw1Bg6EIhzh502dF9noR9uFCllGk';

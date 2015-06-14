@@ -15,9 +15,13 @@ class SyncResult
 	 * @var
 	 */
 	public $syncId;
-	/** @var array $existing */
+	/**
+	 * @var array
+	 */
 	public $existing;
-	/** @var array $nonExisting */
+	/**
+	 * @var array
+	 */
 	public $nonExisting;
 
 	/**
