@@ -2,6 +2,9 @@
 
 namespace WhatsApi;
 
+use WhatsApi\exceptions\ConnectionException;
+use WhatsApi\exceptions\LoginFailureException;
+
 /**
  * Class Client
  */

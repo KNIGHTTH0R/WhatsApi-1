@@ -1,6 +1,6 @@
 <?php
 
-namespace WhatsApi;
+namespace WhatsApi\exceptions;
 
 /**
  * Class LoginFailureException
