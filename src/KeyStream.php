@@ -69,7 +69,7 @@ class KeyStream
 	 * @param $offset
 	 * @param $length
 	 * @return mixed
-	 * @throws Exception
+	 * @throws \InvalidArgumentException
 	 */
 	public function DecodeMessage($buffer, $macOffset, $offset, $length)
 	{
@@ -79,7 +79,7 @@ class KeyStream
 			$foo = ord($buffer[$macOffset + $i]);
 			$bar = ord($mac[$i]);
 			if ($foo !== $bar) {
-				throw new InvalidArgumentException("MAC mismatch: $foo != $bar");
+				throw new \InvalidArgumentException("MAC mismatch: $foo != $bar");
 			}
 		}
 

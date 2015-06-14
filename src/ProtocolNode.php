@@ -36,12 +36,7 @@ class ProtocolNode
 	{
 		if (self::$cli === null) {
 			//initial setter
-			/** @noinspection UnNecessaryDoubleQuotesInspection */
-			if (php_sapi_name() == "cli") {
-				self::$cli = true;
-			} else {
-				self::$cli = false;
-			}
+			self::$cli = php_sapi_name() == 'cli';
 		}
 
 		return self::$cli;
@@ -101,14 +96,14 @@ class ProtocolNode
 	public function nodeString($indent = '', $isChild = false)
 	{
 		//formatters
-		$lt = "<";
-		$gt = ">";
-		$nl = "\n";
+		$lt = '<';
+		$gt = '>';
+		$nl = '\n';
 		if (!self::isCli()) {
-			$lt = "&lt;";
-			$gt = "&gt;";
-			$nl = "<br />";
-			$indent = str_replace(" ", "&nbsp;", $indent);
+			$lt = '&lt;';
+			$gt = '&gt;';
+			$nl = '<br />';
+			$indent = str_replace(' ', '&nbsp;', $indent);
 		}
 
 		$ret = $indent . $lt . $this->tag;
@@ -124,19 +119,19 @@ class ProtocolNode
 				$ret .= $this->data;
 			} else {
 				//raw data
-				$ret .= " " . strlen($this->data) . " byte data";
+				$ret .= ' ' . strlen($this->data) . ' byte data';
 			}
 		}
 		if ($this->children) {
 			$ret .= $nl;
 			$foo = [];
 			foreach ($this->children as $child) {
-				$foo[] = $child->nodeString($indent . "  ", true);
+				$foo[] = $child->nodeString($indent . ' ', true);
 			}
 			$ret .= implode($nl, $foo);
 			$ret .= $nl . $indent;
 		}
-		$ret .= $lt . "/" . $this->tag . $gt;
+		$ret .= $lt . '/' . $this->tag . $gt;
 
 		if (!$isChild) {
 			$ret .= $nl;
@@ -168,7 +163,7 @@ class ProtocolNode
 	 */
 	public function nodeIdContains($needle)
 	{
-		return (strpos($this->getAttribute("id"), $needle) !== false);
+		return (strpos($this->getAttribute('id'), $needle) !== false);
 	}
 
 	/**

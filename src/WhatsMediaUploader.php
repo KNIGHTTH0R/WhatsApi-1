@@ -65,9 +65,9 @@ class WhatsMediaUploader
 	public static function pushFile($uploadResponseNode, $messageContainer, $mediafile, $selfJID)
 	{
 		//get vars
-		$url = $uploadResponseNode->getChild("media")->getAttribute("url");
-		$filepath = $messageContainer["filePath"];
-		$to = $messageContainer["to"];
+		$url = $uploadResponseNode->getChild('media')->getAttribute('url');
+		$filepath = $messageContainer['filePath'];
+		$to = $messageContainer['to'];
 
 		return self::getPostString($filepath, $url, $mediafile, $to, $selfJID);
 	}

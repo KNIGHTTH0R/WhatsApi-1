@@ -509,7 +509,6 @@ class TokenMap
 	 * @param $token
 	 * @param $subdict
 	 * @param $string
-	 * @throws Exception
 	 */
 	public static function GetToken($token, &$subdict, &$string)
 	{
@@ -528,9 +527,8 @@ class TokenMap
 			return;//fail
 		}
 
-		$string = $tokenMap[$token];
-		if (!$string) {
-			throw new InvalidArgumentException('Invalid token/length in GetToken');
+		if (!$tokenMap[$token]) {
+			throw new \InvalidArgumentException('Invalid token/length in GetToken');
 		}
 	}
 }

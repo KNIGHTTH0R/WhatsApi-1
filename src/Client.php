@@ -3662,8 +3662,7 @@ class Client
 			}
 			$buff = $header . $buff;
 		} else {
-			$this->eventManager()->fire('onDisconnect',
-				[
+			$this->eventManager()->fire('onDisconnect', [
 					$this->phoneNumber,
 					$this->socket
 				]);
@@ -3732,26 +3731,23 @@ class Client
 		foreach ($targets as $target) {
 			$jid = $this->getJID($target);
 			$hash = ['jid' => $jid];
-			$toNode = new ProtocolNode('to', $hash, null, null);
+			$toNode = new ProtocolNode('to', $hash);
 			$toNodes[] = $toNode;
 		}
 
-		$broadcastNode = new ProtocolNode('broadcast', null, $toNodes, null);
+		$broadcastNode = new ProtocolNode('broadcast', null, $toNodes);
 
 		$msgId = $this->createMsgId();
-
-		$messageNode = new ProtocolNode('message',
-			[
+		$messageNode = new ProtocolNode('message', [
 				'to' => time() . '@broadcast',
 				'type' => $type,
 				'id' => $msgId
-			], [$node, $broadcastNode], null);
+			], [$node, $broadcastNode]);
 
 		$this->sendNode($messageNode);
 		$this->waitForServer($msgId);
 		//listen for response
-		$this->eventManager()->fire('onSendMessage',
-			[
+		$this->eventManager()->fire('onSendMessage', [
 				$this->phoneNumber,
 				$targets,
 				$msgId,
@@ -3784,14 +3780,13 @@ class Client
 	protected function sendGetGroupsFiltered($type)
 	{
 		$msgID = $this->nodeId['getgroups'] = $this->createIqId();
-		$child = new ProtocolNode($type, null, null, null);
-		$node = new ProtocolNode('iq',
-			[
+
+		$node = new ProtocolNode('iq', [
 				'id' => $msgID,
 				'type' => 'get',
 				'xmlns' => 'w:g2',
 				'to' => Constants::WHATSAPP_GROUP_SERVER
-			], [$child], null);
+			], [new ProtocolNode($type)], null);
 
 		$this->sendNode($node);
 		$this->waitForServer($msgID);
