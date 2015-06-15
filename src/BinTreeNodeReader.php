@@ -5,32 +5,12 @@ namespace WhatsApi;
 /**
  * Class BinTreeNodeReader
  */
-class BinTreeNodeReader
+class BinTreeNodeReader extends BinTreeNode
 {
 	/**
 	 * @var
 	 */
 	private $input;
-	/**
-	 * @var KeyStream
-	 */
-	private $key;
-
-	/**
-	 *
-	 */
-	public function resetKey()
-	{
-		$this->key = null;
-	}
-
-	/**
-	 * @param $key
-	 */
-	public function setKey($key)
-	{
-		$this->key = $key;
-	}
 
 	/**
 	 * @param null $input
@@ -46,11 +26,11 @@ class BinTreeNodeReader
 		$stanzaFlag = ($firstByte & 0xF0) >> 4;
 		$stanzaSize = $this->peekInt16(1) | (($firstByte & 0x0F) << 16);
 		if ($stanzaSize > strlen($this->input)) {
-			throw new \LengthException('Incomplete message $stanzaSize != ' . strlen($this->input));
+			throw new \InvalidArgumentException('Incomplete message $stanzaSize != ' . strlen($this->input));
 		}
 		$this->readInt24();
 		if ($stanzaFlag & 8) {
-			if (isset($this->key)) {
+			if ($this->key) {
 				$realSize = $stanzaSize - 4;
 				$this->input = $this->key->DecodeMessage($this->input, $realSize, 0, $realSize);// . $remainingData;
 			} else {
@@ -113,7 +93,7 @@ class BinTreeNodeReader
 	/**
 	 * @param $token
 	 * @return string
-	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
 	 */
 	protected function getToken($token)
 	{
@@ -175,9 +155,9 @@ class BinTreeNodeReader
 	protected function readAttributes($size)
 	{
 		$attributes = [];
-		$attribCount = ($size - 2 + $size % 2) / 2;
+		$attributesCount = ($size - 2 + $size % 2) / 2;
 
-		for ($i = 0; $i < $attribCount; $i++) {
+		for ($i = 0; $i < $attributesCount; $i++) {
 			$key = $this->readString($this->readInt8());
 			$value = $this->readString($this->readInt8());
 			$attributes[$key] = $value;
@@ -195,18 +175,20 @@ class BinTreeNodeReader
 		$token = $this->readInt8();
 		$size = $this->readListSize($token);
 		$token = $this->readInt8();
-		if ($token == 1) {
-			$attributes = $this->readAttributes($size);
 
-			return new ProtocolNode('start', $attributes);
+		if ($token == 1) {
+			return new ProtocolNode('start', $this->readAttributes($size));
 		} elseif ($token == 2) {
 			return null;
 		}
+
 		$tag = $this->readString($token);
 		$attributes = $this->readAttributes($size);
+
 		if (($size % 2) == 1) {
 			return new ProtocolNode($tag, $attributes);
 		}
+
 		$token = $this->readInt8();
 		if ($this->isListTag($token)) {
 			return new ProtocolNode($tag, $attributes, $this->readList($token));
@@ -233,7 +215,7 @@ class BinTreeNodeReader
 		$size = $this->readListSize($token);
 		$ret = [];
 		for ($i = 0; $i < $size; $i++) {
-			array_push($ret, $this->nextTreeInternal());
+			$ret[] = $this->nextTreeInternal();
 		}
 
 		return $ret;
@@ -319,8 +301,7 @@ class BinTreeNodeReader
 	{
 		$ret = 0;
 		if (strlen($this->input) >= (1 + $offset)) {
-			$sbstr = substr($this->input, $offset, 1);
-			$ret = ord($sbstr);
+			$ret = ord(substr($this->input, $offset, 1));
 		}
 
 		return $ret;

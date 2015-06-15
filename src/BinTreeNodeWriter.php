@@ -5,32 +5,12 @@ namespace WhatsApi;
 /**
  * Class BinTreeNodeWriter
  */
-class BinTreeNodeWriter
+class BinTreeNodeWriter extends BinTreeNode
 {
 	/**
 	 * @var
 	 */
 	private $output;
-	/**
-	 * @var KeyStream
-	 */
-	private $key;
-
-	/**
-	 *
-	 */
-	public function resetKey()
-	{
-		$this->key = null;
-	}
-
-	/**
-	 * @param $key
-	 */
-	public function setKey($key)
-	{
-		$this->key = $key;
-	}
 
 	/**
 	 * @param $domain
