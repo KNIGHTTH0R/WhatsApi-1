@@ -98,16 +98,14 @@ class ProtocolNode
 				$ret .= ' ' . $key . '=\'' . $value . '\'';
 			}
 		}
+
 		$ret .= $gt;
-		if (strlen($this->data) > 0) {
-			if (strlen($this->data) <= 1024) {
-				//message
-				$ret .= $this->data;
-			} else {
-				//raw data
-				$ret .= ' ' . strlen($this->data) . ' byte data';
-			}
+		$dataLen = strlen($this->data);
+
+		if ($dataLen > 0) {
+			$ret .= ($dataLen <= 1024) ? $this->data : ' ' . $dataLen . ' byte data';
 		}
+
 		if ($this->children) {
 			$ret .= $nl;
 			$foo = [];

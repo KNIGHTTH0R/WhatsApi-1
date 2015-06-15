@@ -198,18 +198,18 @@ class BinTreeNodeReader
 		if ($token == 1) {
 			$attributes = $this->readAttributes($size);
 
-			return new ProtocolNode('start', $attributes, null, '');
+			return new ProtocolNode('start', $attributes);
 		} elseif ($token == 2) {
 			return null;
 		}
 		$tag = $this->readString($token);
 		$attributes = $this->readAttributes($size);
 		if (($size % 2) == 1) {
-			return new ProtocolNode($tag, $attributes, null, '');
+			return new ProtocolNode($tag, $attributes);
 		}
 		$token = $this->readInt8();
 		if ($this->isListTag($token)) {
-			return new ProtocolNode($tag, $attributes, $this->readList($token), '');
+			return new ProtocolNode($tag, $attributes, $this->readList($token));
 		}
 
 		return new ProtocolNode($tag, $attributes, null, $this->readString($token));
