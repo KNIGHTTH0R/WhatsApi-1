@@ -3555,7 +3555,7 @@ class Client
 		$this->sendNode(new ProtocolNode('presence', [
 			'type' => $type
 		]));
-		
+
 		$this->eventsManager()->fire('onSendPresence', [
 				$this->phoneNumber,
 				$type,
