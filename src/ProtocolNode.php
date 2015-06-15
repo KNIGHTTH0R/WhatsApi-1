@@ -10,6 +10,10 @@ class ProtocolNode
 	/**
 	 * @var
 	 */
+	private static $cli;
+	/**
+	 * @var
+	 */
 	private $tag;
 	/**
 	 * @var
@@ -23,23 +27,19 @@ class ProtocolNode
 	 * @var
 	 */
 	private $data;
-	/**
-	 * @var
-	 */
-	private static $cli;
 
 	/**
-	 * check if call is from command line
-	 * @return bool
+	 * @param $tag
+	 * @param $attributeHash
+	 * @param $children
+	 * @param $data
 	 */
-	private static function isCli()
+	public function __construct($tag, $attributeHash = null, $children = null, $data = null)
 	{
-		if (self::$cli === null) {
-			//initial setter
-			self::$cli = php_sapi_name() == 'cli';
-		}
-
-		return self::$cli;
+		$this->tag = $tag;
+		$this->attributeHash = $attributeHash;
+		$this->children = $children;
+		$this->data = $data;
 	}
 
 	/**
@@ -72,20 +72,6 @@ class ProtocolNode
 	public function getChildren()
 	{
 		return $this->children;
-	}
-
-	/**
-	 * @param $tag
-	 * @param $attributeHash
-	 * @param $children
-	 * @param $data
-	 */
-	public function __construct($tag, $attributeHash = null, $children = null, $data = null)
-	{
-		$this->tag = $tag;
-		$this->attributeHash = $attributeHash;
-		$this->children = $children;
-		$this->data = $data;
 	}
 
 	/**
@@ -144,6 +130,29 @@ class ProtocolNode
 	}
 
 	/**
+	 * check if call is from command line
+	 * @return bool
+	 */
+	private static function isCli()
+	{
+		if (self::$cli === null) {
+			//initial setter
+			self::$cli = php_sapi_name() == 'cli';
+		}
+
+		return self::$cli;
+	}
+
+	/**
+	 * @param string $needle
+	 * @return boolean
+	 */
+	public function nodeIdContains($needle)
+	{
+		return (strpos($this->getAttribute('id'), $needle) !== false);
+	}
+
+	/**
 	 * @param $attribute
 	 * @return string
 	 */
@@ -158,12 +167,12 @@ class ProtocolNode
 	}
 
 	/**
-	 * @param string $needle
-	 * @return boolean
+	 * @param $tag
+	 * @return bool
 	 */
-	public function nodeIdContains($needle)
+	public function hasChild($tag)
 	{
-		return (strpos($this->getAttribute('id'), $needle) !== false);
+		return $this->getChild($tag) != null;
 	}
 
 	/**
@@ -196,15 +205,6 @@ class ProtocolNode
 	}
 
 	/**
-	 * @param $tag
-	 * @return bool
-	 */
-	public function hasChild($tag)
-	{
-		return $this->getChild($tag) == null ? false : true;
-	}
-
-	/**
 	 * @param int $offset
 	 */
 	public function refreshTimes($offset = 0)
@@ -227,13 +227,11 @@ class ProtocolNode
 	 */
 	public function __toString()
 	{
-		$readableNode = [
+		return json_encode([
 			'tag' => $this->tag,
 			'attributeHash' => $this->attributeHash,
 			'children' => $this->children,
 			'data' => $this->data
-		];
-
-		return json_encode($readableNode);
+		]);
 	}
 }

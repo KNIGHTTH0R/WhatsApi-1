@@ -8,11 +8,6 @@ namespace WhatsApi;
 class SqliteMessageStore implements MessageStoreInterface
 {
 	/**
-	 *
-	 */
-	const DATA_FOLDER = 'wadata';
-
-	/**
 	 * @var \PDO
 	 */
 	private $db;
@@ -22,12 +17,11 @@ class SqliteMessageStore implements MessageStoreInterface
 	 */
 	public function __construct($number)
 	{
-		$fileName = __DIR__ . DIRECTORY_SEPARATOR . self::DATA_FOLDER . DIRECTORY_SEPARATOR . 'msgstore-' . $number . '.db';
-		$createTable = !file_exists($fileName);
+		$fileName = __DIR__ . DIRECTORY_SEPARATOR . Constants::DATA_FOLDER . DIRECTORY_SEPARATOR . 'msgstore-' . $number . '.db';
 
 		$this->db = new \PDO('sqlite:' . $fileName, null, null,
 			[\PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC, \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
-		if ($createTable) {
+		if (!file_exists($fileName)) {
 			$this->db->exec('CREATE TABLE messages (`from` TEXT, `to` TEXT, message TEXT, id TEXT, t TEXT)');
 		}
 	}

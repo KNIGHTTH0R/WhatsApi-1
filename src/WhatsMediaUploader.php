@@ -66,10 +66,7 @@ class WhatsMediaUploader
 	{
 		//get vars
 		$url = $uploadResponseNode->getChild('media')->getAttribute('url');
-		$filepath = $messageContainer['filePath'];
-		$to = $messageContainer['to'];
-
-		return self::getPostString($filepath, $url, $mediafile, $to, $selfJID);
+		return self::getPostString($messageContainer['filePath'], $url, $mediafile, $messageContainer['to'], $selfJID);
 	}
 
 	/**

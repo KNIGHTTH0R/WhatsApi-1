@@ -2122,9 +2122,7 @@ class Client
 	 */
 	protected function dissectPhone()
 	{
-		if (($handle = fopen(__DIR__ . DIRECTORY_SEPARATOR . Constants::DATA_FOLDER . '/countries.csv',
-				'rb')) !== false
-		) {
+		if (($handle = fopen(__DIR__ . DIRECTORY_SEPARATOR . Constants::DATA_FOLDER . '/countries.csv', 'rb')) !== false) {
 			while (($data = fgetcsv($handle, 1000)) !== false) {
 				if (strpos($this->phoneNumber, $data[1]) === 0) {
 					// Return the first appearance.
