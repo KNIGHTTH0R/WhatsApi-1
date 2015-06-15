@@ -1,4 +1,25 @@
 <?php
+/**
+ * Constants
+ */
+define('DS', DIRECTORY_SEPARATOR);
+define('CONNECTED_STATUS', 'connected');
+define('DISCONNECTED_STATUS', 'disconnected');
+define('DATA_FOLDER', __DIR__ . '/../wadata');
+define('MEDIA_FOLDER', DATA_FOLDER . '/media');
+define('PICTURES_FOLDER', DATA_FOLDER . '/pictures');
+define('PORT', 443);
+define('TIMEOUT_SEC', 4);
+define('TIMEOUT_USEC', 0);
+define('WHATSAPP_CHECK_HOST', 'v.whatsapp.net/v2/exist');
+define('WHATSAPP_GROUP_SERVER', 'g.us');
+define('WHATSAPP_REGISTER_HOST', 'v.whatsapp.net/v2/register');
+define('WHATSAPP_REQUEST_HOST', 'v.whatsapp.net/v2/code');
+define('WHATSAPP_SERVER', 's.whatsapp.net');
+define('WHATSAPP_DEVICE', 'S40');
+define('WHATSAPP_VER', '2.12.82');
+define('WHATSAPP_USER_AGENT', 'WhatsApp/2.12.82 S40Version/14.26 Device/Nokia302');
+define('WHATSAPP_VER_CHECKER', 'https://coderus.openrepos.net/whitesoft/whatsapp_scratch');
 
 /**
  * This function extracts the phone number.

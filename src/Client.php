@@ -148,16 +148,11 @@ class Client
 		$this->phoneNumber = $number;
 
 		//e.g. ./cache/nextChallenge.12125557788.dat
-		$this->challengeFilename = sprintf('%s%s%snextChallenge.%s.dat',
-			__DIR__,
-			DIRECTORY_SEPARATOR,
-			Constants::DATA_FOLDER . DIRECTORY_SEPARATOR,
-			$number);
-
+		$this->challengeFilename = sprintf('%snextChallenge.%s.dat', DATA_FOLDER . DS, $number);
 		$this->identity = $this->buildIdentity($identityFile);
 
 		$this->name = $nickname;
-		$this->loginStatus = Constants::DISCONNECTED_STATUS;
+		$this->loginStatus = DISCONNECTED_STATUS;
 		$this->eventManager = new EventsManager();
 	}
 
@@ -217,7 +212,7 @@ class Client
 		}
 
 		// Build the url.
-		$host = 'https://' . Constants::WHATSAPP_CHECK_HOST;
+		$host = 'https://' . WHATSAPP_CHECK_HOST;
 		$query = [
 			'cc' => $phone['cc'],
 			'in' => $phone['phone'],
@@ -285,23 +280,16 @@ class Client
 			throw new \InvalidArgumentException('The provided phone number is not valid.');
 		}
 
-		//$countryCode = ($phone['ISO3166'] != '') ? $phone['ISO3166'] : 'US';
-		//$langCode    = ($phone['ISO639'] != '') ? $phone['ISO639'] : 'en';
-
 		// Build the url.
-		$host = 'https://' . Constants::WHATSAPP_REGISTER_HOST;
+		$host = 'https://' . WHATSAPP_REGISTER_HOST;
 		$query = [
 			'cc' => $phone['cc'],
 			'in' => $phone['phone'],
 			'id' => $this->identity,
-			'code' => $code,
-			//'lg' => $langCode,
-			//'lc' => $countryCode,
-			//'network_radio_type' => "1"
+			'code' => $code
 		];
 
 		$response = $this->getResponse($host, $query);
-
 
 		if ($response->status != 'ok') {
 			$this->eventManager()->fire('onCodeRegisterFailed', [
@@ -346,7 +334,7 @@ class Client
 	 * @return object
 	 *   An object with server response.
 	 *   - status: Status of the request (sent/fail).
-	 *   - length: Registration code lenght.
+	 *   - length: Registration code length.
 	 *   - method: Used method.
 	 *   - reason: Reason of the status (e.g. too_recent/missing_param/bad_param).
 	 *   - param: The missing_param/bad_param.
@@ -373,21 +361,17 @@ class Client
 		$token = generateRequestToken($phone['country'], $phone['phone']);
 
 		// Build the url.
-		$host = 'https://' . Constants::WHATSAPP_REQUEST_HOST;
+		$host = 'https://' . WHATSAPP_REQUEST_HOST;
 		$query = [
 			'in' => $phone['phone'],
 			'cc' => $phone['cc'],
 			'id' => $this->identity,
 			'lg' => $langCode,
 			'lc' => $countryCode,
-			//'mcc' => '000',
-			//'mnc' => '000',
 			'sim_mcc' => $phone['mcc'],
 			'sim_mnc' => $mnc,
 			'method' => $method,
-			//'reason' => "self-send-jailbroken",
-			'token' => $token,
-			//'network_radio_type' => "1"
+			'token' => $token
 		];
 
 		$this->debugPrint($query);
@@ -418,7 +402,6 @@ class Client
 					]);
 					$minutes = round($response->retry_after / 60);
 					throw new \InvalidArgumentException("Code already sent. Retry after $minutes minutes.");
-
 				} else {
 					if (isset($response->reason) && $response->reason == 'too_many_guesses') {
 						$this->eventManager()->fire('onCodeRequestFailedTooManyGuesses', [
@@ -457,9 +440,9 @@ class Client
 	 */
 	public function update()
 	{
-		$WAData = json_decode(file_get_contents(Constants::WHATSAPP_VER_CHECKER), true);
+		$WAData = json_decode(file_get_contents(WHATSAPP_VER_CHECKER), true);
 
-		if (Constants::WHATSAPP_VER != $WAData['e']) {
+		if (WHATSAPP_VER != $WAData['e']) {
 			updateData('token.php', null, $WAData['h']);
 			updateData('Constants.php', $WAData['e']);
 		}
@@ -479,17 +462,15 @@ class Client
 		/* Create a TCP/IP socket. */
 		$socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 		if ($socket !== false) {
-			$result = socket_connect($socket, 'e' . rand(1, 16) . '.whatsapp.net', Constants::PORT);
+			$result = socket_connect($socket, 'e' . rand(1, 16) . '.whatsapp.net', PORT);
 			if ($result === false) {
 				$socket = false;
 			}
 		}
 
 		if ($socket !== false) {
-			socket_set_option($socket, SOL_SOCKET, SO_RCVTIMEO,
-				['sec' => Constants::TIMEOUT_SEC, 'usec' => Constants::TIMEOUT_USEC]);
-			socket_set_option($socket, SOL_SOCKET, SO_SNDTIMEO,
-				['sec' => Constants::TIMEOUT_SEC, 'usec' => Constants::TIMEOUT_USEC]);
+			socket_set_option($socket, SOL_SOCKET, SO_RCVTIMEO, ['sec' => TIMEOUT_SEC, 'usec' => TIMEOUT_USEC]);
+			socket_set_option($socket, SOL_SOCKET, SO_SNDTIMEO, ['sec' => TIMEOUT_SEC, 'usec' => TIMEOUT_USEC]);
 
 			$this->socket = $socket;
 			$this->eventManager()->fire('onConnect', [
@@ -529,7 +510,7 @@ class Client
 			@socket_shutdown($this->socket, 2);
 			@socket_close($this->socket);
 			$this->socket = null;
-			$this->loginStatus = Constants::DISCONNECTED_STATUS;
+			$this->loginStatus = DISCONNECTED_STATUS;
 			$this->eventManager()->fire('onDisconnect', [
 					$this->phoneNumber,
 					$this->socket
@@ -617,7 +598,7 @@ class Client
 		$w = [];
 		$e = [];
 
-		if (socket_select($r, $w, $e, Constants::TIMEOUT_SEC, Constants::TIMEOUT_USEC)) {
+		if (socket_select($r, $w, $e, TIMEOUT_SEC, TIMEOUT_USEC)) {
 			// Something to read
 			if ($stanza = $this->readStanza()) {
 				$this->processInboundData($stanza, $autoReceipt, $type);
@@ -656,7 +637,7 @@ class Client
 			'id' => $msgId,
 			'xmlns' => 'encrypt',
 			'type' => 'get',
-			'to' => Constants::WHATSAPP_SERVER
+			'to' => WHATSAPP_SERVER
 		], [$keyNode]);
 
 		$this->sendNode($node);
@@ -810,7 +791,7 @@ class Client
 			'id' => $msgId,
 			'xmlns' => 'w:b',
 			'type' => 'set',
-			'to' => Constants::WHATSAPP_SERVER
+			'to' => WHATSAPP_SERVER
 		], [$deleteNode]);
 
 		$this->sendNode($node);
@@ -833,7 +814,7 @@ class Client
 		$node = new ProtocolNode('iq', [
 			'id' => $msgId,
 			'type' => 'set',
-			'to' => Constants::WHATSAPP_SERVER,
+			'to' => WHATSAPP_SERVER,
 			'xmlns' => 'urn:xmpp:whatsapp:dirty'
 		], $catnodes);
 
@@ -846,14 +827,14 @@ class Client
 	public function sendClientConfig()
 	{
 		$child = new ProtocolNode('config', [
-			'platform' => Constants::WHATSAPP_DEVICE,
-			'version' => Constants::WHATSAPP_VER
+			'platform' => WHATSAPP_DEVICE,
+			'version' => WHATSAPP_VER
 		]);
 		$node = new ProtocolNode('iq', [
 			'id' => $this->createIqId(),
 			'type' => 'set',
 			'xmlns' => 'urn:xmpp:whatsapp:push',
-			'to' => Constants::WHATSAPP_SERVER
+			'to' => WHATSAPP_SERVER
 		], [$child]);
 
 		$this->sendNode($node);
@@ -870,7 +851,7 @@ class Client
 			'id' => $msgId,
 			'xmlns' => 'urn:xmpp:whatsapp:push',
 			'type' => 'get',
-			'to' => Constants::WHATSAPP_SERVER
+			'to' => WHATSAPP_SERVER
 		], [$child], null);
 
 		$this->sendNode($node);
@@ -957,7 +938,7 @@ class Client
 		$msgId = $this->nodeId['privacy_settings'] = $this->createIqId();
 		$privacyNode = new ProtocolNode('privacy');
 		$node = new ProtocolNode('iq', [
-			'to' => Constants::WHATSAPP_SERVER,
+			'to' => WHATSAPP_SERVER,
 			'id' => $msgId,
 			'xmlns' => 'privacy',
 			'type' => 'get'
@@ -982,7 +963,7 @@ class Client
 
 		$privacyNode = new ProtocolNode('privacy', null, [$categoryNode]);
 		$node = new ProtocolNode('iq', [
-			'to' => Constants::WHATSAPP_SERVER,
+			'to' => WHATSAPP_SERVER,
 			'type' => 'set',
 			'id' => $msgId,
 			'xmlns' => 'privacy'
@@ -1090,7 +1071,7 @@ class Client
 			'id' => $id,
 			'type' => 'get',
 			'xmlns' => 'w',
-			'to' => Constants::WHATSAPP_SERVER
+			'to' => WHATSAPP_SERVER
 		], [$child]);
 
 		$this->sendNode($node);
@@ -1116,7 +1097,7 @@ class Client
 			'id' => $msgId,
 			'xmlns' => 'urn:xmpp:whatsapp:account',
 			'type' => 'get',
-			'to' => Constants::WHATSAPP_SERVER
+			'to' => WHATSAPP_SERVER
 		], [$pricingNode]);
 
 		$this->sendNode($node);
@@ -1134,7 +1115,7 @@ class Client
 			'id' => $msgId,
 			'xmlns' => 'urn:xmpp:whatsapp:account',
 			'type' => 'set',
-			'to' => Constants::WHATSAPP_SERVER
+			'to' => WHATSAPP_SERVER
 		], [$extendingNode]);
 
 		$this->sendNode($node);
@@ -1151,7 +1132,7 @@ class Client
 			'id' => $msgId,
 			'xmlns' => 'w:b',
 			'type' => 'get',
-			'to' => Constants::WHATSAPP_SERVER
+			'to' => WHATSAPP_SERVER
 		], [$listsNode]);
 
 		$this->sendNode($node);
@@ -1173,7 +1154,7 @@ class Client
 			'id' => $msgId,
 			'xmlns' => 'urn:xmpp:whatsapp:account',
 			'type' => 'get',
-			'to' => Constants::WHATSAPP_SERVER
+			'to' => WHATSAPP_SERVER
 		], [$normalizeNode]);
 
 		$this->sendNode($node);
@@ -1208,7 +1189,7 @@ class Client
 
 		$removeNode = new ProtocolNode('remove', null, $childNode);
 		$node = new ProtocolNode('iq', [
-			'to' => Constants::WHATSAPP_SERVER,
+			'to' => WHATSAPP_SERVER,
 			'xmlns' => 'urn:xmpp:whatsapp:account',
 			'type' => 'get',
 			'id' => $this->createIqId()
@@ -1227,7 +1208,7 @@ class Client
 			'id' => $this->createIqId(),
 			'xmlns' => 'w:p',
 			'type' => 'get',
-			'to' => Constants::WHATSAPP_SERVER
+			'to' => WHATSAPP_SERVER
 		], [$pingNode]);
 
 		$this->sendNode($node);
@@ -1253,7 +1234,7 @@ class Client
 			'id' => $this->createIqId(),
 			'xmlns' => 'voip',
 			'type' => 'get',
-			'to' => Constants::WHATSAPP_SERVER
+			'to' => WHATSAPP_SERVER
 		], [$eligibleNode]);
 
 		$this->sendNode($node);
@@ -1278,7 +1259,7 @@ class Client
 		$iqId = $this->nodeId['getstatuses'] = $this->createIqId();
 
 		$node = new ProtocolNode('iq', [
-			'to' => Constants::WHATSAPP_SERVER,
+			'to' => WHATSAPP_SERVER,
 			'type' => 'get',
 			'xmlns' => 'status',
 			'id' => $iqId
@@ -1322,7 +1303,7 @@ class Client
 			'xmlns' => 'w:g2',
 			'id' => $id,
 			'type' => 'set',
-			'to' => Constants::WHATSAPP_GROUP_SERVER
+			'to' => WHATSAPP_GROUP_SERVER
 		], [$createNode], null);
 
 		$this->sendNode($iqNode);
@@ -1382,7 +1363,7 @@ class Client
 
 		$node = new ProtocolNode('iq', [
 			'id' => $msgId,
-			'to' => Constants::WHATSAPP_GROUP_SERVER,
+			'to' => WHATSAPP_GROUP_SERVER,
 			'type' => 'set',
 			'xmlns' => 'w:g2'
 		], [$leave]);
@@ -1704,7 +1685,7 @@ class Client
 	public function sendPong($msgid)
 	{
 		$messageNode = new ProtocolNode('iq', [
-			'to' => Constants::WHATSAPP_SERVER,
+			'to' => WHATSAPP_SERVER,
 			'id' => $msgid,
 			'type' => 'result'
 		]);
@@ -1864,7 +1845,7 @@ class Client
 		$node = new ProtocolNode('iq', [
 			'id' => $this->createIqId(),
 			'type' => 'set',
-			'to' => Constants::WHATSAPP_SERVER
+			'to' => WHATSAPP_SERVER
 		], [$child]);
 
 		$this->sendNode($node);
@@ -1879,7 +1860,7 @@ class Client
 	{
 		$child = new ProtocolNode('status', null, null, $txt);
 		$node = new ProtocolNode('iq', [
-			'to' => Constants::WHATSAPP_SERVER,
+			'to' => WHATSAPP_SERVER,
 			'type' => 'set',
 			'id' => $this->createIqId(),
 			'xmlns' => 'status'
@@ -1992,7 +1973,7 @@ class Client
 		$keys = KeyStream::GenerateKeys(base64_decode($this->password), $this->challengeData);
 		$this->inputKey = new KeyStream($keys[2], $keys[3]);
 		$this->outputKey = new KeyStream($keys[0], $keys[1]);
-		$array = "\0\0\0\0" . $this->phoneNumber . $this->challengeData; // . time() . Constants::WHATSAPP_USER_AGENT . " MccMnc/" . str_pad($phone["mcc"], 3, "0", STR_PAD_LEFT) . "001";
+		$array = "\0\0\0\0" . $this->phoneNumber . $this->challengeData; // . time() . WHATSAPP_USER_AGENT . " MccMnc/" . str_pad($phone["mcc"], 3, "0", STR_PAD_LEFT) . "001";
 		$response = $this->outputKey->EncodeMessage($array, 0, 4, strlen($array) - 4);
 
 		return $response;
@@ -2123,7 +2104,7 @@ class Client
 	 */
 	protected function dissectPhone()
 	{
-		if (($handle = fopen(__DIR__ . DIRECTORY_SEPARATOR . Constants::DATA_FOLDER . '/countries.csv', 'rb')) !== false) {
+		if (($handle = fopen(DATA_FOLDER . '/countries.csv', 'rb')) !== false) {
 			while (($data = fgetcsv($handle, 1000)) !== false) {
 				if (strpos($this->phoneNumber, $data[1]) === 0) {
 					// Return the first appearance.
@@ -2184,7 +2165,7 @@ class Client
 	 */
 	protected function detectMnc($lc, $carrierName)
 	{
-		$fp = fopen(__DIR__ . DIRECTORY_SEPARATOR . Constants::DATA_FOLDER . '/networkinfo.csv', 'r');
+		$fp = fopen(DATA_FOLDER . '/networkinfo.csv', 'r');
 		$mnc = null;
 
 		while ($data = fgetcsv($fp, 0, ',')) {
@@ -2217,8 +2198,8 @@ class Client
 
 		$this->writer->resetKey();
 		$this->reader->resetKey();
-		$resource = Constants::WHATSAPP_DEVICE . '-' . Constants::WHATSAPP_VER . '-' . Constants::PORT;
-		$data = $this->writer->StartStream(Constants::WHATSAPP_SERVER, $resource);
+		$resource = WHATSAPP_DEVICE . '-' . WHATSAPP_VER . '-' . PORT;
+		$data = $this->writer->StartStream(WHATSAPP_SERVER, $resource);
 		$feat = $this->createFeaturesNode();
 		$auth = $this->createAuthNode();
 		$this->sendData($data);
@@ -2238,7 +2219,7 @@ class Client
 			};
 		}
 
-		if ($this->loginStatus === Constants::DISCONNECTED_STATUS) {
+		if ($this->loginStatus === DISCONNECTED_STATUS) {
 			throw new LoginFailureException();
 		}
 
@@ -2260,7 +2241,7 @@ class Client
 	{
 		//If you aren't connected you can't be logged in! ($this->isConnected())
 		//We are connected - but are we logged in? (the rest)
-		return ($this->isConnected() && !empty($this->loginStatus) && $this->loginStatus === Constants::CONNECTED_STATUS);
+		return ($this->isConnected() && !empty($this->loginStatus) && $this->loginStatus === CONNECTED_STATUS);
 	}
 
 	/**
@@ -2274,8 +2255,7 @@ class Client
 	protected function buildIdentity($identity_file = false)
 	{
 		if ($identity_file === false) {
-			$identity_file = sprintf('%s%s%sid.%s.dat', __DIR__, DIRECTORY_SEPARATOR,
-				Constants::DATA_FOLDER . DIRECTORY_SEPARATOR, $this->phoneNumber);
+			$identity_file = sprintf('%sid.%s.dat', DATA_FOLDER . DS, $this->phoneNumber);
 		}
 
 		if (is_readable($identity_file)) {
@@ -2405,10 +2385,10 @@ class Client
 			//check if group message
 			if (stristr($number, '-')) {
 				//to group
-				$number .= '@' . Constants::WHATSAPP_GROUP_SERVER;
+				$number .= '@' . WHATSAPP_GROUP_SERVER;
 			} else {
 				//to normal user
-				$number .= '@' . Constants::WHATSAPP_SERVER;
+				$number .= '@' . WHATSAPP_SERVER;
 			}
 		}
 
@@ -2433,7 +2413,7 @@ class Client
 			$this->mediaFileInfo['filesize'] = strlen($media);
 
 			if ($this->mediaFileInfo['filesize'] < $maxsizebytes) {
-				$this->mediaFileInfo['filepath'] = tempnam(__DIR__ . DIRECTORY_SEPARATOR . Constants::DATA_FOLDER . DIRECTORY_SEPARATOR . Constants::MEDIA_FOLDER,
+				$this->mediaFileInfo['filepath'] = tempnam(DATA_FOLDER . DS . MEDIA_FOLDER,
 					'WHA');
 				file_put_contents($this->mediaFileInfo['filepath'], $media);
 				$this->mediaFileInfo['filemimetype'] = get_mime($this->mediaFileInfo['filepath']);
@@ -2478,7 +2458,7 @@ class Client
 		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_HEADER, 0);
-		curl_setopt($ch, CURLOPT_USERAGENT, Constants::WHATSAPP_USER_AGENT);
+		curl_setopt($ch, CURLOPT_USERAGENT, WHATSAPP_USER_AGENT);
 		curl_setopt($ch, CURLOPT_HTTPHEADER, ['Accept: text/json']);
 		// This makes CURL accept any peer!
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
@@ -2536,14 +2516,14 @@ class Client
 		if ($node->getTag() == 'challenge') {
 			$this->processChallenge($node);
 		} elseif ($node->getTag() == 'failure') {
-			$this->loginStatus = Constants::DISCONNECTED_STATUS;
+			$this->loginStatus = DISCONNECTED_STATUS;
 			$this->eventManager()->fire('onLoginFailed', [
 					$this->phoneNumber,
 					$node->getChild(0)->getTag()
 				]);
 		} elseif ($node->getTag() == 'success') {
 			if ($node->getAttribute('status') == 'active') {
-				$this->loginStatus = Constants::CONNECTED_STATUS;
+				$this->loginStatus = CONNECTED_STATUS;
 				$challengeData = $node->getData();
 				file_put_contents($this->challengeFilename, $challengeData);
 				$this->writer->setKey($this->outputKey);
@@ -2844,18 +2824,18 @@ class Client
 			&& strpos($node->getAttribute('from'), '-') !== false
 			&& $node->getAttribute('type') != null
 		) {
-			$groupId = Constants::parseJID($node->getAttribute('from'));
+			$groupId = parseJID($node->getAttribute('from'));
 			if ($node->getAttribute('add') != null) {
 				$this->eventManager()->fire('onGroupsParticipantsAdd', [
 						$this->phoneNumber,
 						$groupId,
-						Constants::parseJID($node->getAttribute('add'))
+						parseJID($node->getAttribute('add'))
 					]);
 			} elseif ($node->getAttribute('remove') != null) {
 				$this->eventManager()->fire('onGroupsParticipantsRemove', [
 						$this->phoneNumber,
 						$groupId,
-						Constants::parseJID($node->getAttribute('remove'))
+						parseJID($node->getAttribute('remove'))
 					]);
 			}
 		}
@@ -2978,7 +2958,7 @@ class Client
 				$this->processUploadResponse($node);
 			}
 
-			if (strpos($node->getAttribute('from'), Constants::WHATSAPP_GROUP_SERVER) !== false) {
+			if (strpos($node->getAttribute('from'), WHATSAPP_GROUP_SERVER) !== false) {
 				//There are multiple types of Group reponses. Also a valid group response can have NO children.
 				//Events fired depend on text in the ID field.
 				$groupList = [];
@@ -3125,7 +3105,7 @@ class Client
 					'id' => $msgId,
 					'xmlns' => 'w:m',
 					'type' => 'set',
-					'to' => Constants::WHATSAPP_SERVER
+					'to' => WHATSAPP_SERVER
 				], [$ackNode]);
 
 			$this->sendNode($iqNode);
@@ -3406,13 +3386,12 @@ class Client
 		if ($media != null) {
 			$filename = $media->getAttribute('file');
 			$url = $media->getAttribute('url');
+			$dir = DATA_FOLDER . DS . MEDIA_FOLDER . DS;
 
 			//save thumbnail
-			file_put_contents(__DIR__ . DIRECTORY_SEPARATOR . Constants::DATA_FOLDER . DIRECTORY_SEPARATOR . Constants::MEDIA_FOLDER . DIRECTORY_SEPARATOR . 'thumb_' . $filename,
-				$media->getData());
+			file_put_contents($dir . 'thumb_' . $filename, $media->getData());
 			//download and save original
-			file_put_contents(__DIR__ . DIRECTORY_SEPARATOR . Constants::DATA_FOLDER . DIRECTORY_SEPARATOR . Constants::MEDIA_FOLDER . DIRECTORY_SEPARATOR . $filename,
-				file_get_contents($url));
+			file_put_contents($dir . $filename, file_get_contents($url));
 		}
 	}
 
@@ -3427,9 +3406,9 @@ class Client
 
 		if ($pictureNode != null) {
 			if ($pictureNode->getAttribute('type') == 'preview') {
-				$filename = __DIR__ . DIRECTORY_SEPARATOR . Constants::DATA_FOLDER . DIRECTORY_SEPARATOR . Constants::PICTURES_FOLDER . DIRECTORY_SEPARATOR . 'preview_' . $node->getAttribute('from') . 'jpg';
+				$filename = DATA_FOLDER . DS . PICTURES_FOLDER . DS . 'preview_' . $node->getAttribute('from') . 'jpg';
 			} else {
-				$filename = __DIR__ . DIRECTORY_SEPARATOR . Constants::DATA_FOLDER . DIRECTORY_SEPARATOR . Constants::PICTURES_FOLDER . DIRECTORY_SEPARATOR . $node->getAttribute('from') . '.jpg';
+				$filename = DATA_FOLDER . DS . PICTURES_FOLDER . DS . $node->getAttribute('from') . '.jpg';
 			}
 
 			file_put_contents($filename, $pictureNode->getData());
@@ -3748,7 +3727,7 @@ class Client
 			'id' => $msgID,
 			'type' => 'get',
 			'xmlns' => 'w:g2',
-			'to' => Constants::WHATSAPP_GROUP_SERVER
+			'to' => WHATSAPP_GROUP_SERVER
 		], [new ProtocolNode($type)], null);
 
 		$this->sendNode($node);
@@ -3891,7 +3870,7 @@ class Client
 
 		$node = new ProtocolNode('iq', [
 			'id' => $id,
-			'to' => Constants::WHATSAPP_SERVER,
+			'to' => WHATSAPP_SERVER,
 			'type' => 'set',
 			'xmlns' => 'w:m'
 		], [$mediaNode]);
