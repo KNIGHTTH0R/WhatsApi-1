@@ -26,7 +26,7 @@ class Client
 	/**
 	 * @var bool
 	 */
-	protected $debug;
+	protected $debug = false;
 	/**
 	 * @var
 	 */
@@ -127,24 +127,22 @@ class Client
 	 * @var BinTreeNodeReader
 	 */
 	public $reader;
+	/**
+	 * @var events\EventsManager
+	 */
+	private $eventsManager;
 
 	/**
 	 * Default class constructor.
 	 *
-	 * @param string $number
-	 *   The user phone number including the country code without '+' or '00'.
-	 * @param string $nickname
-	 *   The user name.
-	 * @param $debug
-	 *   Debug on or off, false by default.
-	 * @param mixed $identityFile
-	 *  Path to identity file, overrides default path
+	 * @param string $number The user phone number including the country code without '+' or '00'.
+	 * @param string $nickname The user name. Debug on or off, false by default.
+	 * @param mixed $identityFile Path to identity file, overrides default path
 	 */
-	public function __construct($number, $nickname, $debug = false, $identityFile = false)
+	public function __construct($number, $nickname, $identityFile = false)
 	{
 		$this->writer = new BinTreeNodeWriter();
 		$this->reader = new BinTreeNodeReader();
-		$this->debug = $debug;
 		$this->phoneNumber = $number;
 
 		//e.g. ./cache/nextChallenge.12125557788.dat
@@ -153,7 +151,14 @@ class Client
 
 		$this->name = $nickname;
 		$this->loginStatus = DISCONNECTED_STATUS;
-		$this->eventManager = new EventsManager();
+	}
+
+	/**
+	 * Enable debug mode
+	 */
+	public function enableDebugMode()
+	{
+		$this->debug = true;
 	}
 
 	/**
@@ -225,7 +230,7 @@ class Client
 		$response = $this->getResponse($host, $query);
 
 		if ($response->status != 'ok') {
-			$this->eventManager()->fire('onCredentialsBad', [
+			$this->eventsManager()->fire('onCredentialsBad', [
 				$this->phoneNumber,
 				$response->status,
 				$response->reason
@@ -236,7 +241,7 @@ class Client
 
 			throw new \InvalidArgumentException('There was a problem trying to request the code.');
 		} else {
-			$this->eventManager()->fire('onCredentialsGood', [
+			$this->eventsManager()->fire('onCredentialsGood', [
 				$this->phoneNumber,
 				$response->login,
 				$response->pw,
@@ -292,7 +297,7 @@ class Client
 		$response = $this->getResponse($host, $query);
 
 		if ($response->status != 'ok') {
-			$this->eventManager()->fire('onCodeRegisterFailed', [
+			$this->eventsManager()->fire('onCodeRegisterFailed', [
 				$this->phoneNumber,
 				$response->status,
 				$response->reason,
@@ -308,7 +313,7 @@ class Client
 
 			throw new \InvalidArgumentException('An error occurred registering the registration code from WhatsApp. Reason: ' . $response->reason);
 		} else {
-			$this->eventManager()->fire('onCodeRegister', [
+			$this->eventsManager()->fire('onCodeRegister', [
 				$this->phoneNumber,
 				$response->login,
 				$response->pw,
@@ -379,7 +384,7 @@ class Client
 		$this->debugPrint($response);
 
 		if ($response->status == 'ok') {
-			$this->eventManager()->fire('onCodeRegister', [
+			$this->eventsManager()->fire('onCodeRegister', [
 				$this->phoneNumber,
 				$response->login,
 				$response->pw,
@@ -394,7 +399,7 @@ class Client
 		} else {
 			if ($response->status != 'sent') {
 				if (isset($response->reason) && $response->reason == 'too_recent') {
-					$this->eventManager()->fire('onCodeRequestFailedTooRecent', [
+					$this->eventsManager()->fire('onCodeRequestFailedTooRecent', [
 						$this->phoneNumber,
 						$method,
 						$response->reason,
@@ -404,7 +409,7 @@ class Client
 					throw new \InvalidArgumentException("Code already sent. Retry after $minutes minutes.");
 				} else {
 					if (isset($response->reason) && $response->reason == 'too_many_guesses') {
-						$this->eventManager()->fire('onCodeRequestFailedTooManyGuesses', [
+						$this->eventsManager()->fire('onCodeRequestFailedTooManyGuesses', [
 							$this->phoneNumber,
 							$method,
 							$response->reason,
@@ -414,7 +419,7 @@ class Client
 						throw new \InvalidArgumentException("Too many guesses. Retry after $minutes minutes.");
 
 					} else {
-						$this->eventManager()->fire('onCodeRequestFailed', [
+						$this->eventsManager()->fire('onCodeRequestFailed', [
 							$this->phoneNumber,
 							$method,
 							$response->reason,
@@ -424,7 +429,7 @@ class Client
 					}
 				}
 			} else {
-				$this->eventManager()->fire('onCodeRequest', [
+				$this->eventsManager()->fire('onCodeRequest', [
 					$this->phoneNumber,
 					$method,
 					$response->length
@@ -473,7 +478,7 @@ class Client
 			socket_set_option($socket, SOL_SOCKET, SO_SNDTIMEO, ['sec' => TIMEOUT_SEC, 'usec' => TIMEOUT_USEC]);
 
 			$this->socket = $socket;
-			$this->eventManager()->fire('onConnect', [
+			$this->eventsManager()->fire('onConnect', [
 					$this->phoneNumber,
 					$this->socket
 				]
@@ -481,7 +486,7 @@ class Client
 
 			return true;
 		} else {
-			$this->eventManager()->fire('onConnectError', [
+			$this->eventsManager()->fire('onConnectError', [
 					$this->phoneNumber,
 					$this->socket
 				]
@@ -511,7 +516,7 @@ class Client
 			@socket_close($this->socket);
 			$this->socket = null;
 			$this->loginStatus = DISCONNECTED_STATUS;
-			$this->eventManager()->fire('onDisconnect', [
+			$this->eventsManager()->fire('onDisconnect', [
 					$this->phoneNumber,
 					$this->socket
 				]
@@ -520,11 +525,16 @@ class Client
 	}
 
 	/**
+	 * Return events manager
 	 * @return events\EventsManager
 	 */
-	public function eventManager()
+	public function eventsManager()
 	{
-		return $this->eventManager;
+		if($this->eventsManager === null) {
+			$this->eventsManager = new EventsManager();
+		}
+
+		return $this->eventsManager;
 	}
 
 	/**
@@ -1310,7 +1320,7 @@ class Client
 		$this->waitForServer($id);
 		$groupId = $this->groupId;
 
-		$this->eventManager()->fire('onGroupCreate', [
+		$this->eventsManager()->fire('onGroupCreate', [
 			$this->phoneNumber,
 			$groupId
 		]);
@@ -1691,7 +1701,7 @@ class Client
 		]);
 
 		$this->sendNode($messageNode);
-		$this->eventManager()->fire('onSendPong', [
+		$this->eventsManager()->fire('onSendPong', [
 			$this->phoneNumber,
 			$msgid
 		]);
@@ -1725,7 +1735,7 @@ class Client
 		]);
 
 		$this->sendNode($node);
-		$this->eventManager()->fire('onSendPresence',
+		$this->eventsManager()->fire('onSendPresence',
 			[
 				$this->phoneNumber,
 				$type,
@@ -1867,7 +1877,7 @@ class Client
 		], [$child]);
 
 		$this->sendNode($node);
-		$this->eventManager()->fire('onSendStatusUpdate', [
+		$this->eventsManager()->fire('onSendStatusUpdate', [
 			$this->phoneNumber,
 			$txt
 		]);
@@ -2129,7 +2139,7 @@ class Client
 						'mnc' => $data[5]
 					];
 
-					$this->eventManager()->fire('onDissectPhone', [
+					$this->eventsManager()->fire('onDissectPhone', [
 							$this->phoneNumber,
 							$phone['country'],
 							$phone['cc'],
@@ -2147,7 +2157,7 @@ class Client
 			fclose($handle);
 		}
 
-		$this->eventManager()->fire('onDissectPhoneFailed', [
+		$this->eventsManager()->fire('onDissectPhoneFailed', [
 			$this->phoneNumber
 		]);
 
@@ -2223,7 +2233,7 @@ class Client
 			throw new LoginFailureException();
 		}
 
-		$this->eventManager()->fire('onLogin', [
+		$this->eventsManager()->fire('onLogin', [
 			$this->phoneNumber
 		]);
 		$this->sendAvailableForChat();
@@ -2517,7 +2527,7 @@ class Client
 			$this->processChallenge($node);
 		} elseif ($node->getTag() == 'failure') {
 			$this->loginStatus = DISCONNECTED_STATUS;
-			$this->eventManager()->fire('onLoginFailed', [
+			$this->eventsManager()->fire('onLoginFailed', [
 					$this->phoneNumber,
 					$node->getChild(0)->getTag()
 				]);
@@ -2528,7 +2538,7 @@ class Client
 				file_put_contents($this->challengeFilename, $challengeData);
 				$this->writer->setKey($this->outputKey);
 
-				$this->eventManager()->fire('onLoginSuccess', [
+				$this->eventsManager()->fire('onLoginSuccess', [
 						$this->phoneNumber,
 						$node->getAttribute('kind'),
 						$node->getAttribute('status'),
@@ -2536,7 +2546,7 @@ class Client
 						$node->getAttribute('expiration')
 					]);
 			} elseif ($node->getAttribute('status') == 'expired') {
-				$this->eventManager()->fire('onAccountExpired', [
+				$this->eventsManager()->fire('onAccountExpired', [
 					$this->phoneNumber,
 					$node->getAttribute('kind'),
 					$node->getAttribute('status'),
@@ -2545,7 +2555,7 @@ class Client
 				]);
 			}
 		} elseif ($node->getTag() == 'ack' && $node->getAttribute('class') == 'message') {
-			$this->eventManager()->fire('onMessageReceivedServer', [
+			$this->eventsManager()->fire('onMessageReceivedServer', [
 				$this->phoneNumber,
 				$node->getAttribute('from'),
 				$node->getAttribute('id'),
@@ -2555,7 +2565,7 @@ class Client
 		} elseif ($node->getTag() == 'receipt') {
 			if ($node->hasChild('list')) {
 				foreach ($node->getChild('list')->getChildren() as $child) {
-					$this->eventManager()->fire('onMessageReceivedClient', [
+					$this->eventsManager()->fire('onMessageReceivedClient', [
 						$this->phoneNumber,
 						$node->getAttribute('from'),
 						$child->getAttribute('id'),
@@ -2566,7 +2576,7 @@ class Client
 				}
 			}
 
-			$this->eventManager()->fire('onMessageReceivedClient', [
+			$this->eventsManager()->fire('onMessageReceivedClient', [
 				$this->phoneNumber,
 				$node->getAttribute('from'),
 				$node->getAttribute('id'),
@@ -2593,7 +2603,7 @@ class Client
 				}
 				if ($author == '') {
 					//private chat message
-					$this->eventManager()->fire('onGetMessage', [
+					$this->eventsManager()->fire('onGetMessage', [
 						$this->phoneNumber,
 						$node->getAttribute('from'),
 						$node->getAttribute('id'),
@@ -2609,7 +2619,7 @@ class Client
 					}
 				} else {
 					//group chat message
-					$this->eventManager()->fire('onGetGroupMessage', [
+					$this->eventsManager()->fire('onGetGroupMessage', [
 						$this->phoneNumber,
 						$node->getAttribute('from'),
 						$author,
@@ -2636,7 +2646,7 @@ class Client
 				if ($node->getChild('media')->getAttribute('type') == 'image') {
 
 					if ($node->getAttribute('participant') == null) {
-						$this->eventManager()->fire('onGetImage', [
+						$this->eventsManager()->fire('onGetImage', [
 								$this->phoneNumber,
 								$node->getAttribute('from'),
 								$node->getAttribute('id'),
@@ -2654,7 +2664,7 @@ class Client
 								$node->getChild('media')->getAttribute('caption')
 							]);
 					} else {
-						$this->eventManager()->fire('onGetGroupImage', [
+						$this->eventsManager()->fire('onGetGroupImage', [
 								$this->phoneNumber,
 								$node->getAttribute('from'),
 								$node->getAttribute('participant'),
@@ -2675,7 +2685,7 @@ class Client
 					}
 				} elseif ($node->getChild('media')->getAttribute('type') == 'video') {
 					if ($node->getAttribute('participant') == null) {
-						$this->eventManager()->fire('onGetVideo', [
+						$this->eventsManager()->fire('onGetVideo', [
 								$this->phoneNumber,
 								$node->getAttribute('from'),
 								$node->getAttribute('id'),
@@ -2694,7 +2704,7 @@ class Client
 								$node->getChild('media')->getAttribute('caption')
 							]);
 					} else {
-						$this->eventManager()->fire('onGetGroupVideo', [
+						$this->eventsManager()->fire('onGetGroupVideo', [
 								$this->phoneNumber,
 								$node->getAttribute('from'),
 								$node->getAttribute('participant'),
@@ -2716,7 +2726,7 @@ class Client
 					}
 				} elseif ($node->getChild('media')->getAttribute('type') == 'audio') {
 					$author = $node->getAttribute('participant');
-					$this->eventManager()->fire('onGetAudio', [
+					$this->eventsManager()->fire('onGetAudio', [
 							$this->phoneNumber,
 							$node->getAttribute('from'),
 							$node->getAttribute('id'),
@@ -2742,7 +2752,7 @@ class Client
 					}
 					$author = $node->getAttribute('participant');
 
-					$this->eventManager()->fire('onGetvCard', [
+					$this->eventsManager()->fire('onGetvCard', [
 							$this->phoneNumber,
 							$node->getAttribute('from'),
 							$node->getAttribute('id'),
@@ -2758,7 +2768,7 @@ class Client
 					$name = $node->getChild('media')->getAttribute('name');
 					$author = $node->getAttribute('participant');
 
-					$this->eventManager()->fire('onGetLocation', [
+					$this->eventsManager()->fire('onGetLocation', [
 							$this->phoneNumber,
 							$node->getAttribute('from'),
 							$node->getAttribute('id'),
@@ -2779,7 +2789,7 @@ class Client
 				}
 			}
 			if ($node->getChild('received') != null) {
-				$this->eventManager()->fire('onMessageReceivedClient', [
+				$this->eventsManager()->fire('onMessageReceivedClient', [
 						$this->phoneNumber,
 						$node->getAttribute('from'),
 						$node->getAttribute('id'),
@@ -2807,12 +2817,12 @@ class Client
 		) {
 			$presence = [];
 			if ($node->getAttribute('type') == null) {
-				$this->eventManager()->fire('onPresenceAvailable', [
+				$this->eventsManager()->fire('onPresenceAvailable', [
 						$this->phoneNumber,
 						$node->getAttribute('from')
 					]);
 			} else {
-				$this->eventManager()->fire('onPresenceUnavailable', [
+				$this->eventsManager()->fire('onPresenceUnavailable', [
 						$this->phoneNumber,
 						$node->getAttribute('from'),
 						$node->getAttribute('last')
@@ -2826,13 +2836,13 @@ class Client
 		) {
 			$groupId = parseJID($node->getAttribute('from'));
 			if ($node->getAttribute('add') != null) {
-				$this->eventManager()->fire('onGroupsParticipantsAdd', [
+				$this->eventsManager()->fire('onGroupsParticipantsAdd', [
 						$this->phoneNumber,
 						$groupId,
 						parseJID($node->getAttribute('add'))
 					]);
 			} elseif ($node->getAttribute('remove') != null) {
-				$this->eventManager()->fire('onGroupsParticipantsRemove', [
+				$this->eventsManager()->fire('onGroupsParticipantsRemove', [
 						$this->phoneNumber,
 						$groupId,
 						parseJID($node->getAttribute('remove'))
@@ -2844,7 +2854,7 @@ class Client
 			&& strpos($node->getAttribute('from'), '-') === false
 		) {
 			if ($node->getChild(0)->getTag() == 'composing') {
-				$this->eventManager()->fire('onMessageComposing', [
+				$this->eventsManager()->fire('onMessageComposing', [
 						$this->phoneNumber,
 						$node->getAttribute('from'),
 						$node->getAttribute('id'),
@@ -2852,7 +2862,7 @@ class Client
 						$node->getAttribute('t')
 					]);
 			} else {
-				$this->eventManager()->fire('onMessagePaused', [
+				$this->eventsManager()->fire('onMessagePaused', [
 						$this->phoneNumber,
 						$node->getAttribute('from'),
 						$node->getAttribute('id'),
@@ -2865,7 +2875,7 @@ class Client
 			&& $node->getAttribute('type') == 'get'
 			&& $node->getAttribute('xmlns') == 'urn:xmpp:ping'
 		) {
-			$this->eventManager()->fire('onPing', [
+			$this->eventsManager()->fire('onPing', [
 					$this->phoneNumber,
 					$node->getAttribute('id')
 				]);
@@ -2897,13 +2907,13 @@ class Client
 			$index = $sync->getAttribute('index');
 			$result = new SyncResult($index, $sync->getAttribute('sid'), $existingUsers, $failedNumbers);
 
-			$this->eventManager()->fire('onGetSyncResult', [
+			$this->eventsManager()->fire('onGetSyncResult', [
 					$result
 				]);
 		}
 
 		if ($node->getTag() == 'receipt') {
-			$this->eventManager()->fire('onGetReceipt', [
+			$this->eventsManager()->fire('onGetReceipt', [
 					$node->getAttribute('from'),
 					$node->getAttribute('id'),
 					$node->getAttribute('offline'),
@@ -2918,14 +2928,14 @@ class Client
 					foreach ($listChild->getChildren() as $child) {
 						$blockedJids[] = $child->getAttribute('value');
 					}
-					$this->eventManager()->fire('onGetPrivacyBlockedList', [
+					$this->eventsManager()->fire('onGetPrivacyBlockedList', [
 							$this->phoneNumber,
 							$blockedJids
 						]);
 
 					return;
 				}
-				$this->eventManager()->fire('onGetRequestLastSeen', [
+				$this->eventsManager()->fire('onGetRequestLastSeen', [
 						$this->phoneNumber,
 						$node->getAttribute('from'),
 						$node->getAttribute('id'),
@@ -2938,7 +2948,7 @@ class Client
 				foreach ($node->getChild(0)->getChildren() as $child) {
 					$props[$child->getAttribute('name')] = $child->getAttribute('value');
 				}
-				$this->eventManager()->fire('onGetServerProperties', [
+				$this->eventsManager()->fire('onGetServerProperties', [
 						$this->phoneNumber,
 						$node->getChild(0)->getAttribute('version'),
 						$props
@@ -2946,7 +2956,7 @@ class Client
 			}
 
 			if ($node->getChild('picture') != null) {
-				$this->eventManager()->fire('onGetProfilePicture', [
+				$this->eventsManager()->fire('onGetProfilePicture', [
 						$this->phoneNumber,
 						$node->getAttribute('from'),
 						$node->getChild('picture')->getAttribute('type'),
@@ -2972,7 +2982,7 @@ class Client
 
 				if (isset($this->nodeId['groupcreate']) && ($this->nodeId['groupcreate'] == $node->getAttribute('id'))) {
 					$this->groupId = $node->getChild(0)->getAttribute('id');
-					$this->eventManager()->fire('onGroupsChatCreate', [
+					$this->eventsManager()->fire('onGroupsChatCreate', [
 							$this->phoneNumber,
 							$this->groupId
 						]);
@@ -2980,14 +2990,14 @@ class Client
 
 				if (isset($this->nodeId['leavegroup']) && ($this->nodeId['leavegroup'] == $node->getAttribute('id'))) {
 					$this->groupId = $node->getChild(0)->getChild(0)->getAttribute('id');
-					$this->eventManager()->fire('onGroupsChatEnd', [
+					$this->eventsManager()->fire('onGroupsChatEnd', [
 							$this->phoneNumber,
 							$this->groupId
 						]);
 				}
 
 				if (isset($this->nodeId['getgroups']) && ($this->nodeId['getgroups'] == $node->getAttribute('id'))) {
-					$this->eventManager()->fire('onGetGroups', [
+					$this->eventsManager()->fire('onGetGroups', [
 							$this->phoneNumber,
 							$groupList
 						]);
@@ -3028,14 +3038,14 @@ class Client
 					}
 				}
 
-				$this->eventManager()->fire('onGetBroadcastLists', [
+				$this->eventsManager()->fire('onGetBroadcastLists', [
 						$this->phoneNumber,
 						$broadcastLists
 					]);
 			}
 
 			if ($node->getChild('pricing') != null) {
-				$this->eventManager()->fire('onGetServicePricing', [
+				$this->eventsManager()->fire('onGetServicePricing', [
 						$this->phoneNumber,
 						$node->getChild(0)->getAttribute('price'),
 						$node->getChild(0)->getAttribute('cost'),
@@ -3045,7 +3055,7 @@ class Client
 			}
 
 			if ($node->getChild('extend') != null) {
-				$this->eventManager()->fire('onGetExtendAccount', [
+				$this->eventsManager()->fire('onGetExtendAccount', [
 						$this->phoneNumber,
 						$node->getChild('account')->getAttribute('kind'),
 						$node->getChild('account')->getAttribute('status'),
@@ -3055,7 +3065,7 @@ class Client
 			}
 
 			if ($node->getChild('normalize') != null) {
-				$this->eventManager()->fire('onGetNormalizedJid', [
+				$this->eventsManager()->fire('onGetNormalizedJid', [
 						$this->phoneNumber,
 						$node->getChild(0)->getAttribute('result')
 					]);
@@ -3064,7 +3074,7 @@ class Client
 			if ($node->getChild('status') != null) {
 				$child = $node->getChild('status');
 				foreach ($child->getChildren() as $status) {
-					$this->eventManager()->fire('onGetStatus', [
+					$this->eventsManager()->fire('onGetStatus', [
 							$this->phoneNumber,
 							$status->getAttribute('jid'),
 							'requested',
@@ -3085,7 +3095,7 @@ class Client
 				}
 			}
 
-			$this->eventManager()->fire('onGetError', [
+			$this->eventsManager()->fire('onGetError', [
 					$this->phoneNumber,
 					$node->getAttribute('from'),
 					$node->getAttribute('id'),
@@ -3113,13 +3123,13 @@ class Client
 
 		$children = $node->getChild(0);
 		if ($node->getTag() == 'stream:error' && !empty($children) && $node->getChild(0)->getTag() == 'system-shutdown') {
-			$this->eventManager()->fire('onStreamError', [
+			$this->eventsManager()->fire('onStreamError', [
 					$node->getChild(0)->getTag()
 				]);
 		}
 
 		if ($node->getTag() == 'stream:error') {
-			$this->eventManager()->fire('onStreamError', [
+			$this->eventsManager()->fire('onStreamError', [
 					$node->getChild(0)->getTag()
 				]);
 		}
@@ -3129,7 +3139,7 @@ class Client
 			$type = $node->getAttribute('type');
 			switch ($type) {
 				case 'status':
-					$this->eventManager()->fire('onGetStatus', [
+					$this->eventsManager()->fire('onGetStatus', [
 							$this->phoneNumber, //my number
 							$node->getAttribute('from'),
 							$node->getChild(0)->getTag(),
@@ -3140,7 +3150,7 @@ class Client
 					break;
 				case 'picture':
 					if ($node->hasChild('set')) {
-						$this->eventManager()->fire('onProfilePictureChanged', [
+						$this->eventsManager()->fire('onProfilePictureChanged', [
 								$this->phoneNumber,
 								$node->getAttribute('from'),
 								$node->getAttribute('id'),
@@ -3148,7 +3158,7 @@ class Client
 							]);
 					} else {
 						if ($node->hasChild('delete')) {
-							$this->eventManager()->fire('onProfilePictureDeleted', [
+							$this->eventsManager()->fire('onProfilePictureDeleted', [
 									$this->phoneNumber,
 									$node->getAttribute('from'),
 									$node->getAttribute('id'),
@@ -3161,17 +3171,17 @@ class Client
 				case 'contacts':
 					$notification = $node->getChild(0)->getTag();
 					if ($notification == 'add') {
-						$this->eventManager()->fire('onNumberWasAdded', [
+						$this->eventsManager()->fire('onNumberWasAdded', [
 								$this->phoneNumber,
 								$node->getChild(0)->getAttribute('jid')
 							]);
 					} elseif ($notification == 'remove') {
-						$this->eventManager()->fire('onNumberWasRemoved', [
+						$this->eventsManager()->fire('onNumberWasRemoved', [
 								$this->phoneNumber,
 								$node->getChild(0)->getAttribute('jid')
 							]);
 					} elseif ($notification == 'update') {
-						$this->eventManager()->fire('onNumberWasUpdated', [
+						$this->eventsManager()->fire('onNumberWasUpdated', [
 								$this->phoneNumber,
 								$node->getChild(0)->getAttribute('jid')
 							]);
@@ -3180,7 +3190,7 @@ class Client
 				case 'encrypt':
 					$value = $node->getChild(0)->getAttribute('value');
 					if (is_numeric($value)) {
-						$this->eventManager()->fire('onGetKeysLeft', [
+						$this->eventsManager()->fire('onGetKeysLeft', [
 								$this->phoneNumber,
 								$node->getChild(0)->getAttribute('value')
 							]);
@@ -3191,7 +3201,7 @@ class Client
 				case 'w:gp2':
 					if ($node->hasChild('remove')) {
 						if ($node->getChild(0)->hasChild('participant')) {
-							$this->eventManager()->fire('onGroupsParticipantsRemove', [
+							$this->eventsManager()->fire('onGroupsParticipantsRemove', [
 									$this->phoneNumber,
 									$node->getAttribute('from'),
 									$node->getChild(0)->getChild(0)->getAttribute('jid')
@@ -3199,7 +3209,7 @@ class Client
 						}
 					} else {
 						if ($node->hasChild('add')) {
-							$this->eventManager()->fire('onGroupsParticipantsAdd', [
+							$this->eventsManager()->fire('onGroupsParticipantsAdd', [
 									$this->phoneNumber,
 									$node->getAttribute('from'),
 									$node->getChild(0)->getChild(0)->getAttribute('jid')
@@ -3211,7 +3221,7 @@ class Client
 									$groupMembers[] = $cn->getAttribute('jid');
 								}
 
-								$this->eventManager()->fire('onGroupisCreated', [
+								$this->eventsManager()->fire('onGroupisCreated', [
 										$this->phoneNumber,
 										$node->getChild(0)->getChild(0)->getAttribute('creator'),
 										$node->getChild(0)->getChild(0)->getAttribute('id'),
@@ -3222,7 +3232,7 @@ class Client
 									]);
 							} else {
 								if ($node->hasChild('subject')) {
-									$this->eventManager()->fire('onGetGroupsSubject', [
+									$this->eventsManager()->fire('onGetGroupsSubject', [
 											$this->phoneNumber,
 											$node->getAttribute('from'),
 											$node->getAttribute('t'),
@@ -3237,7 +3247,7 @@ class Client
 											$promotedJIDs[] = $cn->getAttribute('jid');
 										}
 
-										$this->eventManager()->fire('onGroupsParticipantsPromote', [
+										$this->eventsManager()->fire('onGroupsParticipantsPromote', [
 												$this->phoneNumber,
 												$node->getAttribute('from'),        //Group-JID
 												$node->getAttribute('t'),           //Time
@@ -3259,7 +3269,7 @@ class Client
 						$author = $node->getChild(0)->getAttribute('author');
 					}
 
-					$this->eventManager()->fire('onPaidAccount',[
+					$this->eventsManager()->fire('onPaidAccount',[
 							$this->phoneNumber,
 							$author,
 							$node->getChild(0)->getChild(0)->getAttribute('kind'),
@@ -3270,7 +3280,7 @@ class Client
 					break;
 				case 'features':
 					if ($node->getChild(0)->getChild(0) == 'encrypt') {
-						$this->eventManager()->fire('onGetFeature', [
+						$this->eventsManager()->fire('onGetFeature', [
 								$this->phoneNumber,
 								$node->getAttribute('from'),
 								$node->getChild(0)->getChild(0)->getAttribute('value')
@@ -3280,7 +3290,7 @@ class Client
 				case 'web':
 					if (($node->getChild(0)->getTag() == 'action') && ($node->getChild(0)->getAttribute('type') == 'sync')) {
 						$data = $node->getChild(0)->getChildren();
-						$this->eventManager()->fire('onWebSync', [
+						$this->eventsManager()->fire('onWebSync', [
 								$this->phoneNumber,
 								$node->getAttribute('from'),
 								$node->getAttribute('id'),
@@ -3300,7 +3310,7 @@ class Client
 				$callId = $node->getChild(0)->getAttribute('call-id');
 				$this->sendReceipt($node, null, null, $callId);
 
-				$this->eventManager()->fire('onCallReceived', [
+				$this->eventsManager()->fire('onCallReceived', [
 						$this->phoneNumber,
 						$node->getAttribute('from'),
 						$node->getAttribute('id'),
@@ -3320,7 +3330,7 @@ class Client
 						$this->sendClearDirty([$child->getAttribute('type')]);
 						break;
 					case 'account':
-						$this->eventManager()->fire('onPaymentRecieved', [
+						$this->eventsManager()->fire('onPaymentRecieved', [
 								$this->phoneNumber,
 								$child->getAttribute('kind'),
 								$child->getAttribute('status'),
@@ -3449,7 +3459,7 @@ class Client
 		$messageNode = @$this->mediaQueue[$id];
 		if ($messageNode == null) {
 			//message not found, can't send!
-			$this->eventManager()->fire('onMediaUploadFailed', [
+			$this->eventsManager()->fire('onMediaUploadFailed', [
 					$this->phoneNumber,
 					$id,
 					$node,
@@ -3478,7 +3488,7 @@ class Client
 
 			if (!$json) {
 				//failed upload
-				$this->eventManager()->fire('onMediaUploadFailed', [
+				$this->eventsManager()->fire('onMediaUploadFailed', [
 						$this->phoneNumber,
 						$id,
 						$node,
@@ -3536,7 +3546,7 @@ class Client
 			$this->sendMessageNode($to, $mediaNode, $message_id);
 		}
 
-		$this->eventManager()->fire('onMediaMessageSent', [
+		$this->eventsManager()->fire('onMediaMessageSent', [
 				$this->phoneNumber,
 				$to,
 				$id,
@@ -3566,7 +3576,7 @@ class Client
 				$error = 'socket EOF, closing socket...';
 				socket_close($this->socket);
 				$this->socket = null;
-				$this->eventManager()->fire('onClose', [
+				$this->eventsManager()->fire('onClose', [
 						$this->phoneNumber,
 						$error
 					]
@@ -3604,7 +3614,7 @@ class Client
 			}
 			$buff = $header . $buff;
 		} else {
-			$this->eventManager()->fire('onDisconnect', [
+			$this->eventsManager()->fire('onDisconnect', [
 				$this->phoneNumber,
 				$this->socket
 			]);
@@ -3689,7 +3699,7 @@ class Client
 		$this->sendNode($messageNode);
 		$this->waitForServer($msgId);
 		//listen for response
-		$this->eventManager()->fire('onSendMessage', [
+		$this->eventsManager()->fire('onSendMessage', [
 			$this->phoneNumber,
 			$targets,
 			$msgId,
@@ -3785,7 +3795,7 @@ class Client
 
 		$this->sendNode($messageNode);
 
-		$this->eventManager()->fire('onSendMessage', [
+		$this->eventsManager()->fire('onSendMessage', [
 			$this->phoneNumber,
 			$to,
 			$msgId,
@@ -3824,7 +3834,7 @@ class Client
 			$messageNode = new ProtocolNode('receipt', $messageHash);
 		}
 		$this->sendNode($messageNode);
-		$this->eventManager()->fire('onSendMessageReceived', [
+		$this->eventsManager()->fire('onSendMessageReceived', [
 			$this->phoneNumber,
 			$node->getAttribute('id'),
 			$node->getAttribute('from'),
@@ -3953,7 +3963,7 @@ class Client
 				}
 			}
 		}
-		$this->eventManager()->fire('onGetGroupV2Info', [
+		$this->eventsManager()->fire('onGetGroupV2Info', [
 				$this->phoneNumber,
 				$groupID,
 				$creator,

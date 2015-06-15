@@ -46,7 +46,7 @@ abstract class AllEvents
 	{
 		foreach ($this->eventsToListenFor as $event) {
 			if (is_callable([$this, $event])) {
-				$this->client->eventManager()->bind($event, [$this, $event]);
+				$this->client->eventsManager()->bind($event, [$this, $event]);
 			}
 		}
 
