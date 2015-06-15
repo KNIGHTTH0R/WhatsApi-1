@@ -3812,8 +3812,7 @@ class Client
 
 		if ($deletedNumbers != null || count($deletedNumbers)) {
 			for ($j = 0; $j < count($deletedNumbers); $j++, $i++) {
-				$users[$i] = new ProtocolNode('user', ['jid' => $this->getJID($deletedNumbers[$j]), 'type' => 'delete'],
-					null, null);
+				$users[$i] = new ProtocolNode('user', ['jid' => $this->getJID($deletedNumbers[$j]), 'type' => 'delete']);
 			}
 		}
 

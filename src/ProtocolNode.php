@@ -12,15 +12,15 @@ class ProtocolNode
 	 */
 	private static $cli;
 	/**
-	 * @var
+	 * @var string
 	 */
 	private $tag;
 	/**
-	 * @var
+	 * @var array
 	 */
 	private $attributeHash;
 	/**
-	 * @var
+	 * @var array
 	 */
 	private $children;
 	/**
