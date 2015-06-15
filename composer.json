@@ -17,12 +17,15 @@
     "issues": "https://github.com/ARACOOOL/WhatsApi/issues",
     "wiki": "https://github.com/ARACOOOL/WhatsApi/wiki",
     "source": "https://github.com/ARACOOOL/WhatsApi",
-    "original":"https://github.com/WHAnonymous/Chat-API"
+    "original": "https://github.com/WHAnonymous/Chat-API"
   },
   "autoload": {
     "psr-4": {
       "WhatsApi\\": "src/"
-    }
+    },
+    "files": [
+      "src/func.php"
+    ]
   },
   "require": {
     "php": ">=5.4",
