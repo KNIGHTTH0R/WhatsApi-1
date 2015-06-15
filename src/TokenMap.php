@@ -527,7 +527,8 @@ class TokenMap
 			return;//fail
 		}
 
-		if (!$tokenMap[$token]) {
+		$string = $tokenMap[$token];
+		if (!$string) {
 			throw new \InvalidArgumentException('Invalid token/length in GetToken');
 		}
 	}

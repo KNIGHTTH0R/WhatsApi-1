@@ -3,9 +3,9 @@
 namespace WhatsApi\events;
 
 /**
- * Class WhatsApiEventsManager
+ * Class EventsManager
  */
-class WhatsApiEventsManager
+class EventsManager
 {
 	/**
 	 * @var array

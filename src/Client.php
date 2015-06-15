@@ -2,6 +2,7 @@
 
 namespace WhatsApi;
 
+use WhatsApi\events\EventsManager;
 use WhatsApi\exceptions\ConnectionException;
 use WhatsApi\exceptions\LoginFailureException;
 
@@ -157,7 +158,7 @@ class Client
 
 		$this->name = $nickname;
 		$this->loginStatus = Constants::DISCONNECTED_STATUS;
-		$this->eventManager = new WhatsApiEventsManager();
+		$this->eventManager = new EventsManager();
 	}
 
 	/**
@@ -538,7 +539,7 @@ class Client
 	}
 
 	/**
-	 * @return events\WhatsApiEventsManager
+	 * @return events\EventsManager
 	 */
 	public function eventManager()
 	{
