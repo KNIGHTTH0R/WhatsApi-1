@@ -5,7 +5,7 @@ namespace WhatsApi;
 /**
  * Media uploader class
  */
-class WhatsMediaUploader
+class MediaUploader
 {
 	/**
 	 * @param $host

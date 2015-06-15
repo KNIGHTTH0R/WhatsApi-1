@@ -2038,7 +2038,7 @@ class Client
 			$filename = array_pop($exploded);
 		} else {
 			//upload new file
-			$json = WhatsMediaUploader::pushFile($node, $messageNode, $this->mediaFileInfo, $this->phoneNumber);
+			$json = MediaUploader::pushFile($node, $messageNode, $this->mediaFileInfo, $this->phoneNumber);
 
 			if (!$json) {
 				//failed upload
