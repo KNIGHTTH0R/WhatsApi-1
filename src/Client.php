@@ -448,8 +448,8 @@ class Client
 		$WAData = json_decode(file_get_contents(WHATSAPP_VER_CHECKER), true);
 
 		if (WHATSAPP_VER != $WAData['e']) {
-			updateData('token.php', null, $WAData['h']);
-			updateData('Constants.php', $WAData['e']);
+			updateData('bootstrap.php', null, $WAData['h']);
+			updateData('bootstrap.php', $WAData['e']);
 		}
 	}
 

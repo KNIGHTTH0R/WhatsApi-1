@@ -17,6 +17,7 @@ define('WHATSAPP_REGISTER_HOST', 'v.whatsapp.net/v2/register');
 define('WHATSAPP_REQUEST_HOST', 'v.whatsapp.net/v2/code');
 define('WHATSAPP_SERVER', 's.whatsapp.net');
 define('WHATSAPP_DEVICE', 'S40');
+define('WHATSAPP_RELEASE', 1431039885607);
 define('WHATSAPP_VER', '2.12.82');
 define('WHATSAPP_USER_AGENT', 'WhatsApp/2.12.82 S40Version/14.26 Device/Nokia302');
 define('WHATSAPP_VER_CHECKER', 'https://coderus.openrepos.net/whitesoft/whatsapp_scratch');
@@ -221,13 +222,11 @@ function updateData($nameFile, $WAver, $WAToken = null)
 
 	$content = explode("\n", $content);
 
-	if ($file == __DIR__ . '/token.php') {
-		$content[22] = '    $releaseTime = \'' . $WAToken . '\';';
+	if ($WAToken !== null) {
+		$content[20] = 'define(\'WHATSAPP_RELEASE\', \'' . $WAToken . '\');';
 	} else {
-		if ($file == __DIR__ . '/Constants.php') {
-			$content[21] = '    const WHATSAPP_VER = \'' . trim($WAver) . '\';                                                          // The WhatsApp version.';
-			$content[22] = '    const WHATSAPP_USER_AGENT = \'WhatsApp/' . trim($WAver) . ' S40Version/14.26 Device/Nokia302\';         // User agent used in request/registration code.';
-		}
+		$content[21] = 'define(\'WHATSAPP_VER\', \'' . trim($WAver) . '\');';
+		$content[22] = 'define(\'WHATSAPP_USER_AGENT\', \'WhatsApp/' . trim($WAver) . ' S40Version/14.26 Device/Nokia302\');';
 	}
 
 	file_put_contents($file, implode("\n", $content));
@@ -319,9 +318,6 @@ function getExtensionFromMime($mime)
  */
 function generateRequestToken($country, $phone)
 {
-	$const = 'PdA2DJyKoUrwLw1Bg6EIhzh502dF9noR9uFCllGk';
-	$releaseTime = '1431039885607';
-	$token = md5($const . $releaseTime . $phone);
-
+	$token = md5('PdA2DJyKoUrwLw1Bg6EIhzh502dF9noR9uFCllGk' . WHATSAPP_RELEASE . $phone);
 	return $token;
 }
