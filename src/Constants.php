@@ -16,7 +16,7 @@ class Constants
 	const PICTURES_FOLDER = 'pictures';                                                      // The relative folder to store picture files
 	const DATA_FOLDER = 'wadata';                                                            // The relative folder to store cache files.
 	const PORT = 443;                                                                        // The port of the WhatsApp server.
-	const TIMEOUT_SEC = 2;                                                                   // The timeout for the connection with the WhatsApp servers.
+	const TIMEOUT_SEC = 4;                                                                   // The timeout for the connection with the WhatsApp servers.
 	const TIMEOUT_USEC = 0;
 	const WHATSAPP_CHECK_HOST = 'v.whatsapp.net/v2/exist';                                   // The check credentials host.
 	const WHATSAPP_GROUP_SERVER = 'g.us';                                                    // The Group server hostname

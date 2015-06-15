@@ -37,7 +37,7 @@ class MyEvents extends AllEvents
 //        'onGetGroupsSubject',
 //        'onGetImage',
 //        'onGetLocation',
-//        'onGetMessage',
+        'onGetMessage',
 //        'onGetNormalizedJid',
 //        'onGetPrivacyBlockedList',
 //        'onGetProfilePicture',
@@ -97,5 +97,19 @@ class MyEvents extends AllEvents
 	public function onDisconnect($mynumber, $socket)
 	{
 		echo "<p>Booo!, Phone number $mynumber is disconnected!</p>";
+	}
+
+	/**
+	 * @param $mynumber
+	 * @param $from
+	 * @param $id
+	 * @param $type
+	 * @param $time
+	 * @param $name
+	 * @param $body
+	 */
+	public function onGetMessage($mynumber, $from, $id, $type, $time, $name, $body)
+	{
+		echo "Message from $name:\n$body\n\n";
 	}
 }
