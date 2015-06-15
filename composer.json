@@ -24,7 +24,7 @@
       "WhatsApi\\": "src/"
     },
     "files": [
-      "src/func.php"
+      "src/bootstrap.php"
     ]
   },
   "require": {
