@@ -3158,24 +3158,20 @@ class Client
 				$lc = '';
 			}
 
-			$child = new ProtocolNode('body', [
+			$childNode = [new ProtocolNode('body', [
 				'lg' => $lg,
 				'lc' => $lc
-			], null, $feedback);
-			$childNode = [$child];
+			], null, $feedback)];
 		} else {
 			$childNode = null;
 		}
 
-		$removeNode = new ProtocolNode('remove', null, $childNode);
-		$node = new ProtocolNode('iq', [
+		$this->sendNode(new ProtocolNode('iq', [
 			'to' => WHATSAPP_SERVER,
 			'xmlns' => 'urn:xmpp:whatsapp:account',
 			'type' => 'get',
 			'id' => $this->createIqId()
-		], [$removeNode]);
-
-		$this->sendNode($node);
+		], [new ProtocolNode('remove', null, $childNode)]));
 	}
 
 	/**
@@ -3183,15 +3179,12 @@ class Client
 	 */
 	public function sendPing()
 	{
-		$pingNode = new ProtocolNode('ping');
-		$node = new ProtocolNode('iq', [
+		$this->sendNode(new ProtocolNode('iq', [
 			'id' => $this->createIqId(),
 			'xmlns' => 'w:p',
 			'type' => 'get',
 			'to' => WHATSAPP_SERVER
-		], [$pingNode]);
-
-		$this->sendNode($node);
+		], [new ProtocolNode('ping')]));
 	}
 
 	/**
@@ -3559,13 +3552,11 @@ class Client
 	 */
 	public function sendPresence($type = 'active')
 	{
-		$node = new ProtocolNode('presence', [
+		$this->sendNode(new ProtocolNode('presence', [
 			'type' => $type
-		]);
-
-		$this->sendNode($node);
-		$this->eventsManager()->fire('onSendPresence',
-			[
+		]));
+		
+		$this->eventsManager()->fire('onSendPresence', [
 				$this->phoneNumber,
 				$type,
 				$this->name
