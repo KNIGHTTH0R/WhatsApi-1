@@ -7,12 +7,12 @@ namespace WhatsApi;
  */
 interface MessageStoreInterface
 {
-	/**
-	 * @param $from
-	 * @param $to
-	 * @param $txt
-	 * @param $id
-	 * @param $t
-	 */
-	public function saveMessage($from, $to, $txt, $id, $t);
+    /**
+     * @param $from
+     * @param $to
+     * @param $txt
+     * @param $id
+     * @param $t
+     */
+    public function saveMessage($from, $to, $txt, $id, $t);
 }

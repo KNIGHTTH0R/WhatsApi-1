@@ -11,24 +11,24 @@ namespace WhatsApi;
 
 abstract class BinTreeNode
 {
-	/**
-	 * @var KeyStream
-	 */
-	protected $key;
+    /**
+     * @var KeyStream
+     */
+    protected $key;
 
-	/**
-	 *
-	 */
-	public function resetKey()
-	{
-		$this->key = null;
-	}
+    /**
+     *
+     */
+    public function resetKey()
+    {
+        $this->key = null;
+    }
 
-	/**
-	 * @param KeyStream $key
-	 */
-	public function setKey(KeyStream $key)
-	{
-		$this->key = $key;
-	}
+    /**
+     * @param KeyStream $key
+     */
+    public function setKey(KeyStream $key)
+    {
+        $this->key = $key;
+    }
 }
